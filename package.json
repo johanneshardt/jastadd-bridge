@@ -17,10 +17,23 @@
     "vscode": "^1.75.0"
   },
   "activationEvents": [
-    "onLanguage:plaintext"
+    "onLanguage:jastadd"
   ],
   "main": "./client/out/extension",
   "contributes": {
+    "languages": [
+      {
+        "id": "jastadd",
+        "extensions": [
+          ".jastadd"
+        ],
+        "aliases": [
+          "JastAdd",
+          "jastadd",
+          "Jastadd"
+        ]
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "Example configuration",
