@@ -7,12 +7,14 @@
 			"request": "launch",
 			"name": "Launch Client",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}"],
-			"outFiles": ["${workspaceRoot}/client/out/**/*.js"],
-			"preLaunchTask": {
-				"type": "npm",
-				"script": "watch"
-			}
+			"args": [
+				"--extensionDevelopmentPath=${workspaceRoot}"
+			],
+			"outFiles": [
+				"${workspaceRoot}/client/out/**/*.js"
+			],
+			// workaround for not being able to specify multiple tasks here
+			"preLaunchTask": "build server & client"
 		},
 		{
 			"name": "Language Server E2E Test",
@@ -24,7 +26,9 @@
 				"--extensionTestsPath=${workspaceRoot}/client/out/test/index",
 				"${workspaceRoot}/client/testFixture"
 			],
-			"outFiles": ["${workspaceRoot}/client/out/test/**/*.js"]
+			"outFiles": [
+				"${workspaceRoot}/client/out/test/**/*.js"
+			]
 		}
 	]
 }

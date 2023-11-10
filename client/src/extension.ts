@@ -19,7 +19,7 @@ let client: LanguageClient;
 export function activate(context: ExtensionContext) {
 	// Path to generated JAR (TODO)
 	const serverModule = context.asAbsolutePath(
-		path.join('server', 'build', 'libs', 'server-1.0-SNAPSHOT.jar')
+		path.join('server', 'build', 'server.jar')
 	);
 
 	const port = 15990;

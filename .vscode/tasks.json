@@ -28,6 +28,30 @@
 			"problemMatcher": [
 				"$tsc-watch"
 			]
+		},
+		{
+			"label": "generate jar",
+			"type": "shell",
+			"command": "cd server && ./gradlew jar",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		{
+			"label": "build server & client",
+			"dependsOn": [
+				{
+					"type": "npm",
+					"script": "watch"
+				},
+				"generate jar"
+			]
 		}
 	]
 }

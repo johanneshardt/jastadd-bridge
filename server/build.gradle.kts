@@ -1,5 +1,4 @@
 plugins {
-    id("java")
     id("application")
 }
 
@@ -15,6 +14,7 @@ java {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
+
 tasks {
     compileJava {
         options.encoding = "UTF-8"
@@ -27,8 +27,12 @@ tasks {
 
 // Package into fat jar
 tasks.jar {
+    archiveFileName.set("server.jar")
+    destinationDirectory.set(file("$buildDir"))
     manifest.attributes["Main-Class"] = "org.dagjohannes.Main"
-    val dependencies = configurations
+   
+    val dependencies = 
+        configurations
             .runtimeClasspath
             .get()
             .map { zipTree(it) }
