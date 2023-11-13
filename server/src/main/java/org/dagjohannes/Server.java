@@ -14,12 +14,14 @@ public class Server implements LanguageServer, LanguageClientAware {
     LanguageClient client;
     TextDocumentService textDocument;
     WorkspaceService workSpace;
+    String compilerPath;
     boolean initialized = false;
 
-    public Server() {
+    public Server(String compilerPath) {
         // TODO implement these interfaces
-        this.textDocument = null;
+        this.textDocument = new JastAddTDS(compilerPath);
         this.workSpace = null;
+        this.compilerPath = compilerPath;
     }
 
     private CompletableFuture<Object> notInitializedError() {
@@ -35,9 +37,10 @@ public class Server implements LanguageServer, LanguageClientAware {
         Logger.debug("Initializing...");
         var clientCapabilities = params.getCapabilities(); // TODO handle these
         var serverCapabilities = new ServerCapabilities();
-//        var m = new ShowMessage
         var res = new InitializeResult(serverCapabilities);
-//        serverCapabilities.setColorProvider(true);
+        
+        serverCapabilities.setHoverProvider(true);
+        
         client.showMessage(new MessageParams(MessageType.Warning,"HELLO HI HELLO WOW"));
         this.initialized = true;
         return CompletableFuture.supplyAsync(() -> res);

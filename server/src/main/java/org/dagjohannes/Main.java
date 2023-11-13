@@ -38,23 +38,12 @@ public class Main {
             var output = socket.getOutputStream();
 
             // see https://github.com/eclipse-lsp4j/lsp4j/blob/main/documentation/README.md
-            var server = new Server();
+            var server = new Server(compilerPath);
             Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, input, output);
             LanguageClient client = launcher.getRemoteProxy();
             server.connect(client);
             Logger.debug("Connected to client, listening...");
             launcher.startListening();
-            var a = ASTProvider.parseAst(compilerPath, compilerArgs.toArray(String[]::new));
-            var rootNode = new AstNode(a.rootNode);
-            var info = new AstInfo(
-                    rootNode,
-                    PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
-                    AstNodeApiStyle.BEAVER_PACKED_BITS,
-                    TypeIdentificationStyle.REFLECTION
-            );
-
-            printAst("  ", info, rootNode);
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

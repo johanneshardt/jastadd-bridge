@@ -84,7 +84,7 @@
     "vscode:prepublish": "npm run jar & npm run compile",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
-    "jar": "cd server && gradlew jar",
+    "jar": "cd server && ./gradlew jar",
     "lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
     "postinstall": "cd client && npm install && cd ..",
     "test": "sh ./scripts/e2e.sh"
