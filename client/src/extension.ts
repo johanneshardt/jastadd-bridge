@@ -3,7 +3,6 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Socket } from 'node:net';
 import * as path from 'path';
 import { workspace, ExtensionContext } from 'vscode';
 
@@ -17,30 +16,34 @@ import {
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-	// Path to generated JAR (TODO)
+
+	// load settings
+	const settings = workspace.getConfiguration('jastaddBridge');
+	console.log(settings);
 	const serverModule = context.asAbsolutePath(
-		path.join('server', 'build', 'server.jar')
+		path.join('server', 'server.jar')
 	);
+	
+	const port = 15990; // TODO determine port dynamically
 
-	const port = 15990;
-
+	// TODO we should probably use something like this: https://www.npmjs.com/package/locate-java-home
 	const serverOptions: ServerOptions = {
 		run: { 
 			command: "java", 
-			args: ['-jar', serverModule],
+			args: ['-jar', serverModule, settings.get("compiler.path"), settings.get("compiler.arguments")],
 			transport: {
 				kind: TransportKind.socket,
 				port: port
-			} 
+			}
 		},
-		debug: {
-			command: "java",
-			args: ['-jar', serverModule],
+		debug: { 
+			command: "java", 
+			args: ['-jar', serverModule, settings.get("compiler.path"), settings.get("compiler.arguments")],
 			transport: {
 				kind: TransportKind.socket,
 				port: port
-			} 
-		}
+			}
+		},
 	};
 
 	// Options to control the language client

@@ -6,7 +6,7 @@
     "Johannes Hardt <me@johanneshardt.com>",
     "Dag Hemberg"
   ],
-  "license": "BSD-3-Clause",
+  "license": "BSD-2-Clause",
   "version": "1.0.0",
   "repository": {
     "type": "git",
@@ -44,15 +44,29 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "Example configuration",
+      "title": "JastAdd Bridge",
       "properties": {
-        "languageServerExample.maxNumberOfProblems": {
+        "jastaddBridge.compiler.path": {
           "scope": "resource",
-          "type": "number",
-          "default": 100,
-          "description": "Controls the maximum number of problems produced by the server."
+          "type": "string",
+          "format": "path",
+          "description": "The path to a compiler built with JastAdd."
         },
-        "languageServerExample.trace.server": {
+        "jastaddBridge.compiler.arguments": {
+          "scope": "resource",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Arguments to be passed to your compiler."
+        },
+        "jastaddBridge.overrideJavaHome": {
+          "scope": "resource",
+          "type": "string",
+          "format": "path",
+          "markdownDescription": "Specify if you want to override the version of Java determined from `$JAVA_HOME`."
+        },
+        "jastaddBridge.trace.server": {
           "scope": "window",
           "type": "string",
           "enum": [
@@ -83,5 +97,8 @@
     "eslint": "^8.35.0",
     "mocha": "^9.2.1",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "locate-java-home": "^1.1.2"
   }
 }

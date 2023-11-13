@@ -17,6 +17,10 @@ client/node_modules/**
 
 # server
 **.gradle
+server/gradle
 server/build/**
+**/*gradle*
 # distribute the server.jar file
-!server/build/ 
+server/
+!server/server.jar
+

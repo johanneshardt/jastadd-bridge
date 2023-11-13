@@ -1,17 +1,34 @@
 package org.dagjohannes;
 
-import java.io.IOException;
-import java.net.Socket;
-
+import codeprober.AstInfo;
+import codeprober.ast.AstNode;
+import codeprober.metaprogramming.AstNodeApiStyle;
+import codeprober.metaprogramming.TypeIdentificationStyle;
+import codeprober.protocol.PositionRecoveryStrategy;
+import codeprober.util.ASTProvider;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.tinylog.Logger;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.List;
+
 
 public class Main {
+    public static void printAst(String prefix, AstInfo info, AstNode currentNode) {
+        System.out.println(prefix + currentNode);
+        for (var child : currentNode.getChildren(info)) {
+            printAst(prefix + "  ", info, child);
+        }
+    }
+    // TODO improve argument handling
     public static void main(String[] args) throws IOException {
-        var port = 15990; // TODO read this from somewhere or smth
+        Logger.debug("Args received:\n  " + String.join("\n  ", args));
+        var port = Integer.parseInt((args[args.length-1]).split("=")[1]); // port is always last argument
+        var compilerPath = args[0];
+        var compilerArgs = List.of(args).subList(1, args.length-1); // all other arguments are passed to the compiler
         Logger.debug("Server started, awaiting connection on -> {}", port);
 
         // Start listening on localhost
@@ -27,6 +44,17 @@ public class Main {
             server.connect(client);
             Logger.debug("Connected to client, listening...");
             launcher.startListening();
+            var a = ASTProvider.parseAst(compilerPath, compilerArgs.toArray(String[]::new));
+            var rootNode = new AstNode(a.rootNode);
+            var info = new AstInfo(
+                    rootNode,
+                    PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
+                    AstNodeApiStyle.BEAVER_PACKED_BITS,
+                    TypeIdentificationStyle.REFLECTION
+            );
+
+            printAst("  ", info, rootNode);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

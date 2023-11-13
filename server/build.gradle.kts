@@ -28,7 +28,7 @@ tasks {
 // Package into fat jar
 tasks.jar {
     archiveFileName.set("server.jar")
-    destinationDirectory.set(file("$buildDir"))
+    destinationDirectory.set(file(layout.projectDirectory))
     manifest.attributes["Main-Class"] = "org.dagjohannes.Main"
    
     val dependencies = 
@@ -45,6 +45,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.21.1")
+    implementation(files("code-prober.jar"))
     // logging
     implementation("org.tinylog:tinylog-api:2.6.2")
     implementation("org.tinylog:tinylog-impl:2.6.2")

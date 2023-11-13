@@ -4,3 +4,7 @@ Produce package file with `vsce package`, it can be published to the store with 
 See <https://code.visualstudio.com/api/working-with-extensions/publishing-extension>. There are some prerequisites, such as setting up an organization that owns the package in Azure Devops.
 
 Before publishing, we should test whether the `vscode:prepublish` script works!
+
+# File associations
+
+- maybe popup when no associations are registered, that links to the correct place where you add them
