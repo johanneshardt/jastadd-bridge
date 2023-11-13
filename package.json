@@ -86,7 +86,7 @@
     "watch": "tsc -b -w",
     "jar": "cd server && gradlew jar",
     "lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+    "postinstall": "cd client && npm install && cd ..",
     "test": "sh ./scripts/e2e.sh"
   },
   "devDependencies": {
