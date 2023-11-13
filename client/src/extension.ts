@@ -3,6 +3,7 @@ import {
   IJavaHomeInfo,
   ILocateJavaHome,
 } from "locate-java-home/js/es5/lib/interfaces";
+import common = require("mocha/lib/interfaces/common");
 import * as path from "path";
 import {
   workspace,
@@ -13,6 +14,7 @@ import {
 } from "vscode";
 
 import {
+  Executable,
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
@@ -74,33 +76,23 @@ export function activate(context: ExtensionContext) {
 
     const port = 15990; // TODO determine port dynamically
 
+    const commonOptions: Executable = {
+      command: javaPath,
+      args: [
+        "-Djava.security.manager=allow",
+        "-jar",
+        serverModule,
+        settings.get("compiler.path"),
+        settings.get("compiler.arguments"),
+      ],
+      transport: {
+        kind: TransportKind.socket,
+        port: port,
+      },
+    };
     const serverOptions: ServerOptions = {
-      run: {
-        command: javaPath,
-        args: [
-          "-jar",
-          serverModule,
-          settings.get("compiler.path"),
-          settings.get("compiler.arguments"),
-        ],
-        transport: {
-          kind: TransportKind.socket,
-          port: port,
-        },
-      },
-      debug: {
-        command: javaPath,
-        args: [
-          "-jar",
-          serverModule,
-          settings.get("compiler.path"),
-          settings.get("compiler.arguments"),
-        ],
-        transport: {
-          kind: TransportKind.socket,
-          port: port,
-        },
-      },
+      run: commonOptions,
+      debug: commonOptions,
     };
 
     // Options to control the language client
