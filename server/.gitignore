@@ -1,3 +1,6 @@
+# Allow CodeProber dependency
+!code-prober.jar
+
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
