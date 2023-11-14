@@ -41,34 +41,35 @@ public class JastAddTDS implements TextDocumentService {
         Logger.debug("Hovering at {}", params.getPosition());
         return CompletableFutures.computeAsync(c -> {
             c.checkCanceled();
-            try {
-                var doc = cachedDoc.orElse(Document.loadFile(params.getTextDocument().getUri()));
-                //                    line starts at 1         2^12 bits per line          column stars at one
-                var offset = (params.getPosition().getLine() + 1) * (1 << 12) + params.getPosition().getCharacter() + 1;
-                var nodes = NodesAtPosition.get(doc.info, doc.rootNode, offset);
-                var content = new MarkupContent(
-                        MarkupKind.MARKDOWN,
-                        nodes.stream()
-                                .findFirst()
-                                .map(n -> "**Type**: " + n.result.type)
-                                .orElse("*Type not available.*"));
-                return new Hover(content);
-            } catch (NullPointerException e) {
-                Logger.warn(e);
-                return new Hover(new MarkupContent(MarkupKind.MARKDOWN, "*Type not available.*"));
-            }
+            // check if we have a cached document, load it otherwise
+            // this is only empty() if parsing the ast throws nullpointerexeption
+            cachedDoc = cachedDoc.or(() -> Document.loadFile(params.getTextDocument().getUri()));
+            var content = cachedDoc
+                    .map(d -> {
+                        // line, col are 1-indexed. Each line is 2^12 == 4096 long.
+                        var offset = (params.getPosition().getLine() + 1) * (1 << 12) + params.getPosition().getCharacter() + 1;
+                        var nodes = NodesAtPosition.get(d.info, d.rootNode, offset);
+                        return new MarkupContent(
+                                MarkupKind.MARKDOWN,
+                                nodes.stream()
+                                        .findFirst()
+                                        .map(n -> "**Type**: " + n.result.type)
+                                        .orElse("*Type not available.*"));
+                    })
+                    .orElse(new MarkupContent(MarkupKind.MARKDOWN, "*Type not available.*"));
+            return new Hover(content);
         });
     }
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
-        cachedDoc = Optional.of(Document.loadFile(params.getTextDocument().getUri()));
+        cachedDoc = Document.loadFile(params.getTextDocument().getUri());
         Logger.info("opened");
     }
 
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
-        cachedDoc = cachedDoc.map(Document::refresh);
+        cachedDoc = cachedDoc.flatMap(Document::refresh);
         Logger.info("changed");
     }
 
@@ -84,29 +85,36 @@ public class JastAddTDS implements TextDocumentService {
     }
 
     private record Document(URI location, AstNode rootNode, AstInfo info) {
-        private static Document load(URI location) {
-            var path = new File(location).getAbsoluteFile().toString();
-            var rootNode = new AstNode(ASTProvider.parseAst(compilerPath, new String[]{path}).rootNode); // TODO pass compiler args?
-            var info = new AstInfo(
-                    rootNode,
-                    PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
-                    AstNodeApiStyle.BEAVER_PACKED_BITS,
-                    TypeIdentificationStyle.REFLECTION
-            );
-            return new Document(location, rootNode, info);
+        private static Optional<Document> parse(URI location) {
+            try {
+                var path = new File(location).getAbsoluteFile().toString();
+                var rootNode = new AstNode(ASTProvider.parseAst(compilerPath, new String[]{path}).rootNode); // TODO pass compiler args?
+                var info = new AstInfo(
+                        rootNode,
+                        PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
+                        AstNodeApiStyle.BEAVER_PACKED_BITS,
+                        TypeIdentificationStyle.REFLECTION
+                );
+                return Optional.of(new Document(location, rootNode, info));
+            } catch (NullPointerException e) {
+                Logger.error(e);
+                return Optional.empty();
+            }
+
         }
 
-        public static Document loadFile(String location) {
+        public static Optional<Document> loadFile(String location) {
             try {
+                Logger.debug("Loading file: ", location);
                 var uri = new URI(location);
-                return Document.load(uri);
+                return Document.parse(uri);
             } catch (URISyntaxException e) {
                 throw new RuntimeException("Couldn't resolve path with URI: " + location);
             }
         }
 
-        public Document refresh() {
-            return Document.load(this.location);
+        public Optional<Document> refresh() {
+            return Document.parse(this.location);
         }
     }
 }
