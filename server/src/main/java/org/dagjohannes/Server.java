@@ -1,4 +1,5 @@
 package org.dagjohannes;
+
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
@@ -38,14 +39,14 @@ public class Server implements LanguageServer, LanguageClientAware {
         var clientCapabilities = params.getCapabilities(); // TODO handle these
         var serverCapabilities = new ServerCapabilities();
         var res = new InitializeResult(serverCapabilities);
-        
+
         serverCapabilities.setHoverProvider(true);
-        
-        client.showMessage(new MessageParams(MessageType.Warning,"HELLO HI HELLO WOW"));
+        serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
+
+        client.showMessage(new MessageParams(MessageType.Warning, "HELLO HI HELLO WOW"));
         this.initialized = true;
         return CompletableFuture.supplyAsync(() -> res);
     }
-
 
 
     @Override
