@@ -19,6 +19,8 @@
   "keywords": [
     "jastadd",
     "attribute grammars",
+    "lsp",
+    "ide",
     "java"
   ],
   "engines": {
