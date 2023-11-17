@@ -8,5 +8,5 @@
 	"files.watcherExclude": {
 		"**/target": true
 	},
-	//"workbench.colorTheme": "Darcula"
+	"workbench.colorTheme": "Dark+ Tweaked"
 }
