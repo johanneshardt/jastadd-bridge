@@ -2,6 +2,7 @@ package org.dagjohannes;
 
 import codeprober.AstInfo;
 import codeprober.ast.AstNode;
+import codeprober.locator.ApplyLocator;
 import codeprober.locator.NodesAtPosition;
 import codeprober.metaprogramming.AstNodeApiStyle;
 import codeprober.metaprogramming.TypeIdentificationStyle;
@@ -14,6 +15,7 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.tinylog.Logger;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -30,10 +32,28 @@ public class JastAddTDS implements TextDocumentService {
         cachedDoc = Optional.empty();
     }
 
+    static String allProperties(AstInfo info, AstNode node, StringBuilder s) {
+        for (var ch : node.getChildren(info)) {
+            s.append(String.join(", ", ch.propertyListShow(info)));
+            allProperties(info, ch, s);
+        }
+        return s.toString();
+    }
+
     private String astWSpan(String prefix, AstInfo info, AstNode currentNode, StringBuilder sb) {
         sb.append(prefix + currentNode.underlyingAstNode + " @ " + currentNode.getRecoveredSpan(info) + "\n");
         for (var child : currentNode.getChildren(info)) astWSpan(prefix + "  ", info, child, sb);
         return sb.toString();
+    }
+
+    private <T> Optional<T> invoke(AstNode node, Class<T> type, String methodName, Object... args) {
+        try {
+            return Optional.of(type.cast(node.underlyingAstNode.getClass().getMethod(methodName).invoke(node.underlyingAstNode, args)));
+
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            Logger.error(e);
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -44,20 +64,14 @@ public class JastAddTDS implements TextDocumentService {
             // check if we have a cached document, load it otherwise
             // this is only empty() if parsing the ast throws nullpointerexeption
             cachedDoc = cachedDoc.or(() -> Document.loadFile(params.getTextDocument().getUri()));
-            var content = cachedDoc
-                    .map(d -> {
-                        // line, col are 1-indexed. Each line is 2^12 == 4096 long.
-                        var offset = (params.getPosition().getLine() + 1) * (1 << 12) + params.getPosition().getCharacter() + 1;
-                        var nodes = NodesAtPosition.get(d.info, d.rootNode, offset);
-                        return new MarkupContent(
-                                MarkupKind.MARKDOWN,
-                                nodes.stream()
-                                        .findFirst()
-                                        .map(n -> "**Type**: " + n.result.type)
-                                        .orElse("*Type not available.*"));
-                    })
-                    .orElse(new MarkupContent(MarkupKind.MARKDOWN, "*Type not available.*"));
-            return new Hover(content);
+            var content = cachedDoc.flatMap(d -> {
+                // line, col are 1-indexed. Each line is 2^12 == 4096 long.
+                var offset = (params.getPosition().getLine() + 1) * (1 << 12) + params.getPosition().getCharacter() + 1;
+                var nodes = NodesAtPosition.get(d.info, d.rootNode, offset);
+                var node = nodes.stream().findFirst().map(n -> ApplyLocator.toNode(d.info, n).node);
+                return node.flatMap(n -> invoke(n, String.class, "hover")); // try to invoke the hover attribute
+            }).orElse("*Hover not available.* You might need to define an attribute ```syn String ASTNode.hover()``` in your compiler.");
+            return new Hover(new MarkupContent(MarkupKind.MARKDOWN, content));
         });
     }
 
@@ -89,12 +103,7 @@ public class JastAddTDS implements TextDocumentService {
             try {
                 var path = new File(location).getAbsoluteFile().toString();
                 var rootNode = new AstNode(ASTProvider.parseAst(compilerPath, new String[]{path}).rootNode); // TODO pass compiler args?
-                var info = new AstInfo(
-                        rootNode,
-                        PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
-                        AstNodeApiStyle.BEAVER_PACKED_BITS,
-                        TypeIdentificationStyle.REFLECTION
-                );
+                var info = new AstInfo(rootNode, PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD, AstNodeApiStyle.BEAVER_PACKED_BITS, TypeIdentificationStyle.REFLECTION);
                 return Optional.of(new Document(location, rootNode, info));
             } catch (NullPointerException e) {
                 Logger.error(e);

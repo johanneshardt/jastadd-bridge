@@ -8,5 +8,6 @@
 	"files.watcherExclude": {
 		"**/target": true
 	},
-	"workbench.colorTheme": "Dark+ Tweaked"
+	"workbench.colorTheme": "Horizon Bright Bold",
+	"jastaddBridge.compiler.path": "C:\\Programming\\LTH\\Compilers (EDAN65)\\p025-johannes-lukas\\A6\\compiler.jar"
 }

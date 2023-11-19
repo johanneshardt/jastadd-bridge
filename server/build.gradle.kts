@@ -30,12 +30,12 @@ tasks.jar {
     archiveFileName.set("server.jar")
     destinationDirectory.set(file(layout.projectDirectory))
     manifest.attributes["Main-Class"] = "org.dagjohannes.Main"
-   
-    val dependencies = 
-        configurations
-            .runtimeClasspath
-            .get()
-            .map { zipTree(it) }
+
+    val dependencies =
+            configurations
+                    .runtimeClasspath
+                    .get()
+                    .map { zipTree(it) }
     from(dependencies)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA") // avoid signatures from dependencies
@@ -46,6 +46,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.21.1")
     implementation(files("code-prober.jar"))
+    implementation("org.jastadd:jastadd:2.3.6")
     // logging
     implementation("org.tinylog:tinylog-api:2.6.2")
     implementation("org.tinylog:tinylog-impl:2.6.2")
