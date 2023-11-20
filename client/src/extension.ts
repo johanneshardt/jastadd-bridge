@@ -81,7 +81,6 @@ function launchServer(
   settings: WorkspaceConfiguration,
   context: ExtensionContext
 ) {
-  console.log(settings);
   const server = context.asAbsolutePath(path.join("server", "server.jar"));
 
   const port = 15990; // TODO determine port dynamically

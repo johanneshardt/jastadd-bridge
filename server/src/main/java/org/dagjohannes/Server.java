@@ -36,6 +36,7 @@ public class Server implements LanguageServer, LanguageClientAware {
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
         Logger.debug("Initializing...");
+        
         var clientCapabilities = params.getCapabilities(); // TODO handle these
         var serverCapabilities = new ServerCapabilities();
         var res = new InitializeResult(serverCapabilities);
