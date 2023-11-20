@@ -8,3 +8,7 @@ Before publishing, we should test whether the `vscode:prepublish` script works!
 # File associations
 
 - maybe popup when no associations are registered, that links to the correct place where you add them
+
+# Logging
+
+Introduce setting that controls level of logging and send info to server.

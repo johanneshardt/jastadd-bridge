@@ -70,7 +70,7 @@ export function activate(context: ExtensionContext) {
         .then((selection) => {
           commands.executeCommand(
             "workbench.action.openWorkspaceSettings",
-            "jastaddBridge.compiler.path"
+            "jastaddBridge.overrideJavaHome"
           ); // TODO provide option to reload plugin here?
         });
     });
@@ -115,6 +115,8 @@ function launchServer(
     },
   };
 
+  console.debug(`Starting server with arguments: ${serverOptions}`);
+
   // Create the language client and start the client.
   client = new LanguageClient(
     "jastadd-bridge",
@@ -130,13 +132,13 @@ function launchServer(
 function fetchJavaInstallations(
   settings: WorkspaceConfiguration
 ): Promise<string> {
-  const userProvidedJava: string =
-    settings.get("overrideJavaHome") + "/bin/java";
+  const userProvidedJava: string = settings.get("overrideJavaHome");
 
   if (userProvidedJava.length > 0) {
+    const javaBinary = userProvidedJava + "/bin/java";
     return new Promise((resolve, reject) => {
       exec(
-        `"${userProvidedJava}" --version`, // TODO this is probably very fragile
+        `"${javaBinary}" --version`, // TODO this is probably very fragile
         (error: ExecException, stdout: string, stderr: string) => {
           if (error) {
             reject(`Java install found at: "${userProvidedJava}" is invalid.`);
@@ -160,7 +162,7 @@ function fetchJavaInstallations(
           } else if (installations.length === 0) {
             reject();
           } else {
-            installations[0].executables.java;
+            resolve(installations[0].executables.java);
           }
         }
       );
