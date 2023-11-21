@@ -1,5 +1,4 @@
 {
-	"editor.insertSpaces": false,
 	"typescript.tsc.autoDetect": "off",
 	"typescript.preferences.quoteStyle": "single",
 	"editor.codeActionsOnSave": {
@@ -8,6 +7,4 @@
 	"files.watcherExclude": {
 		"**/target": true
 	},
-	"workbench.colorTheme": "Horizon Bright Bold",
-	"jastaddBridge.compiler.path": "C:\\Programming\\LTH\\Compilers (EDAN65)\\p025-johannes-lukas\\A6\\compiler.jar"
 }
