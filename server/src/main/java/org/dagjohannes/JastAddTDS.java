@@ -6,10 +6,13 @@ import codeprober.metaprogramming.AstNodeApiStyle;
 import codeprober.metaprogramming.TypeIdentificationStyle;
 import codeprober.protocol.PositionRecoveryStrategy;
 import codeprober.util.ASTProvider;
+
+import org.dagjohannes.util.DiagnosticHandler;
 import org.dagjohannes.util.NodesAtPosition;
 import org.dagjohannes.util.Properties;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
+import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.tinylog.Logger;
 
@@ -19,18 +22,28 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class JastAddTDS implements TextDocumentService {
-    private static String compilerPath;
+    // private static String compilerPath;
+    private static Server server;
     // maybe cache like the last 3 edits? Since you often undo/redo and there is a version number
     @NonNull
     private Optional<Document> cachedDoc;
+    private DiagnosticHandler diagnosticsHandler;
 
-    public JastAddTDS(String compilerPath) {
-        JastAddTDS.compilerPath = compilerPath;
+    public JastAddTDS(Server server) {
+        JastAddTDS.server = server;
         cachedDoc = Optional.empty();
+        diagnosticsHandler = new DiagnosticHandler(server);
     }
+
+    // Saving here: refresh doc
+    // cachedDoc
+    //     .filter(d -> d.isSame(params.getTextDocument().getUri()))
+    //     .ifPresentOrElse(Document::refresh, () -> Document.loadFile(params.getTextDocument().getUri()));
+    // cachedDoc = cachedDoc.flatMap(Document::refresh); // TODO support multiple files
 
     @Override
     public CompletableFuture<Hover> hover(HoverParams params) {
@@ -56,37 +69,60 @@ public class JastAddTDS implements TextDocumentService {
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
-        cachedDoc = Document.loadFile(params.getTextDocument().getUri());
+        diagnosticsHandler.refresh();
         Logger.info("opened");
     }
 
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
-        cachedDoc
-                .filter(d -> d.isSame(params.getTextDocument().getUri()))
-                .ifPresentOrElse(Document::refresh, () -> Document.loadFile(params.getTextDocument().getUri()));
-        cachedDoc = cachedDoc.flatMap(Document::refresh); // TODO support multiple files
+        // only update diagnostics on save
         Logger.info("changed");
     }
 
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
         cachedDoc = Optional.empty();
+        var uri = params.getTextDocument().getUri();
+        diagnosticsHandler.clear(uri);
         Logger.info("closed");
     }
 
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
+        diagnosticsHandler.refresh();
         Logger.info("saved");
     }
 
+    @Override
+    public CompletableFuture<DocumentDiagnosticReport> diagnostic(DocumentDiagnosticParams params) {
+        return Document
+            .loadFile(params.getTextDocument().getUri())
+            .flatMap(doc -> Properties
+                .getDiagnostics(doc.rootNode())
+                .map(DiagnosticHandler::report))
+            .orElseGet(DiagnosticHandler::emptyReport);
+    };
+
+    // känns som att denna behöver decouplas/omarbetas ganska rejält
     private record Document(URI location, AstNode rootNode, AstInfo info) {
         // TODO add option that calls purgeCache() before parseAst()
         private static Optional<Document> parse(URI location) {
             try {
                 var path = new File(location).getAbsoluteFile().toString();
-                var rootNode = new AstNode(ASTProvider.parseAst(compilerPath, new String[]{path}).rootNode); // TODO pass compiler args?
-                var info = new AstInfo(rootNode, PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD, AstNodeApiStyle.BEAVER_PACKED_BITS, TypeIdentificationStyle.REFLECTION);
+                // TODO pass compiler args?
+
+                var rootNode = new AstNode(
+                    ASTProvider.parseAst(server.getCompilerPath(), 
+                    new String[]{path}).rootNode
+                ); 
+
+                var info = new AstInfo(
+                    rootNode, 
+                    PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD, 
+                    AstNodeApiStyle.BEAVER_PACKED_BITS, 
+                    TypeIdentificationStyle.REFLECTION
+                );
+
                 return Optional.of(new Document(location, rootNode, info));
             } catch (NullPointerException e) {
                 Logger.error(e);
@@ -103,7 +139,10 @@ public class JastAddTDS implements TextDocumentService {
         public boolean isSame(String otherURI) {
             var other = resolveURI(otherURI);
             try {
-                return Files.isSameFile(new File(location).getAbsoluteFile().toPath(), new File(otherURI).getAbsoluteFile().toPath());
+                return Files.isSameFile(
+                    new File(location).getAbsoluteFile().toPath(), 
+                    new File(otherURI).getAbsoluteFile().toPath()
+                );
             } catch (IOException e) {
                 Logger.error(e);
                 return false; // TODO could be better

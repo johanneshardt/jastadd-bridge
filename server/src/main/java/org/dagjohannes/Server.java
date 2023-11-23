@@ -12,17 +12,25 @@ import static org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode.ServerNotInit
 
 public class Server implements LanguageServer, LanguageClientAware {
 
-    LanguageClient client;
-    TextDocumentService textDocument;
-    WorkspaceService workSpace;
-    String compilerPath;
-    boolean initialized = false;
+    private LanguageClient client;
+    private TextDocumentService textDocument;
+    private WorkspaceService workSpace;
+    private String compilerPath;
+    private boolean initialized = false;
+
+    public LanguageClient getClient() {
+        return client;
+    }
+
+    public String getCompilerPath() {
+        return compilerPath;
+    }
 
     public Server(String compilerPath) {
         // TODO implement these interfaces
-        this.textDocument = new JastAddTDS(compilerPath);
         this.workSpace = null;
         this.compilerPath = compilerPath;
+        this.textDocument = new JastAddTDS(this);
     }
 
     private CompletableFuture<Object> notInitializedError() {
@@ -41,8 +49,13 @@ public class Server implements LanguageServer, LanguageClientAware {
         var serverCapabilities = new ServerCapabilities();
         var res = new InitializeResult(serverCapabilities);
 
+        var tdcc = new TextDocumentClientCapabilities();
+        tdcc.setDiagnostic(new DiagnosticCapabilities(true, true));
+        clientCapabilities.setTextDocument(tdcc);
+
         serverCapabilities.setHoverProvider(true);
         serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
+        serverCapabilities.setDiagnosticProvider(new DiagnosticRegistrationOptions("jab"));
 
         client.showMessage(new MessageParams(MessageType.Warning, "HELLO HI HELLO WOW"));
         this.initialized = true;
