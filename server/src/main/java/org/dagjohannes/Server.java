@@ -1,5 +1,6 @@
 package org.dagjohannes;
 
+import org.dagjohannes.util.ClientLoggingProvider;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
@@ -12,10 +13,11 @@ import static org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode.ServerNotInit
 
 public class Server implements LanguageServer, LanguageClientAware {
 
-    LanguageClient client;
-    TextDocumentService textDocument;
-    WorkspaceService workSpace;
-    String compilerPath;
+    private LanguageClient client;
+    private final TextDocumentService textDocument;
+    private final WorkspaceService workSpace;
+    private final String compilerPath;
+    private ClientLoggingProvider clientLoggingProvider;
     boolean initialized = false;
 
     public Server(String compilerPath) {
@@ -35,8 +37,10 @@ public class Server implements LanguageServer, LanguageClientAware {
 
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-        Logger.debug("Initializing...");
-        
+        System.out.println("Set log level to '" + "verbose" + "'");
+        clientLoggingProvider.setLogLevel("verbose");
+        clientLoggingProvider.setClient(client);
+        Logger.info("Initializing server...");
         var clientCapabilities = params.getCapabilities(); // TODO handle these
         var serverCapabilities = new ServerCapabilities();
         var res = new InitializeResult(serverCapabilities);
@@ -75,8 +79,15 @@ public class Server implements LanguageServer, LanguageClientAware {
     }
 
     @Override
+    public void setTrace(SetTraceParams params) {
+        clientLoggingProvider.setLogLevel(params.getValue());
+    }
+
+    @Override
     public void connect(LanguageClient client) {
         this.client = client;
-        client.logMessage(new MessageParams(MessageType.Info, "Connected to server!"));
+        this.clientLoggingProvider = (ClientLoggingProvider) org.tinylog.provider.ProviderRegistry.getLoggingProvider();
+        this.clientLoggingProvider.setClient(this.client);
+        Logger.info("Connected to server!");
     }
 }

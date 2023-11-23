@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class JastAddTDS implements TextDocumentService {
     private static String compilerPath;
+    private static boolean purgeCompiler;
     // maybe cache like the last 3 edits? Since you often undo/redo and there is a version number
     @NonNull
     private Optional<Document> cachedDoc;
@@ -40,7 +41,6 @@ public class JastAddTDS implements TextDocumentService {
         cachedDoc = cachedDoc
                 .filter(d -> d.location.toString()
                         .equals(params.getTextDocument().getUri())).map(d -> {
-                    System.out.println("IT MATCHES");
                     return d;
                 })
                 .or(() -> Document.loadFile(params.getTextDocument().getUri()));
@@ -72,7 +72,7 @@ public class JastAddTDS implements TextDocumentService {
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
         cachedDoc = Optional.empty();
-        Logger.info("closed");
+        Logger.info("closed {}");
     }
 
     @Override

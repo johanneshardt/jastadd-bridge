@@ -88,7 +88,7 @@ function launchServer(
   const commonOptions: Executable = {
     command: javaPath,
     args: [
-      "-Djava.security.manager=allow",
+      "-Djava.security.manager=allow", // TODO remove this
       "-jar",
       server,
       settings.get("compiler.path"),
@@ -104,6 +104,7 @@ function launchServer(
     debug: commonOptions,
   };
 
+  console.log(`Log level: ${settings.get("trace.server")}`);
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
@@ -111,6 +112,9 @@ function launchServer(
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
       fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+    },
+    initializationOptions: {
+      trace: settings.get("trace.server"),
     },
   };
 

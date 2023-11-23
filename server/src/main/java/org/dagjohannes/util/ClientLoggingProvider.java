@@ -1,0 +1,107 @@
+package org.dagjohannes.util;
+
+import org.eclipse.lsp4j.LogTraceParams;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.tinylog.Level;
+import org.tinylog.format.AdvancedMessageFormatter;
+import org.tinylog.format.MessageFormatter;
+import org.tinylog.provider.ContextProvider;
+import org.tinylog.provider.LoggingProvider;
+import org.tinylog.provider.NopContextProvider;
+
+import java.util.Locale;
+
+
+/**
+ * Interfaces with LSP for logTrace notifications.
+ * ERROR, WARN are sent as logTrace
+ * INFO, DEBUG, TRACE are sent as logTrace (with verbose)
+ * TODO possibly interface with logMessage, to show popups?
+ */
+public class ClientLoggingProvider implements LoggingProvider {
+
+    private LanguageClient client;
+    private LogLevel l;
+    private final AdvancedMessageFormatter f;
+
+    public ClientLoggingProvider() {
+        this.l = LogLevel.MESSAGES; // set level at instantiation
+        this.f = new AdvancedMessageFormatter(Locale.getDefault(), true);
+    }
+
+    public void setClient(LanguageClient c) {
+        this.client = c;
+    }
+
+    public void setLogLevel(String logLevel) {
+        this.l = switch (logLevel) {
+            case "off" -> LogLevel.OFF;
+            case "messages" -> LogLevel.MESSAGES;
+            case "verbose" -> LogLevel.VERBOSE;
+            default -> throw new IllegalStateException("Unexpected value: " + logLevel);
+        };
+    }
+
+    @Override
+    public ContextProvider getContextProvider() {
+        return new NopContextProvider();
+    }
+
+    @Override
+    public Level getMinimumLevel() {
+        return Level.TRACE;
+    }
+
+    @Override
+    public Level getMinimumLevel(String tag) {
+        return Level.TRACE;
+    }
+
+    @Override
+    public boolean isEnabled(int depth, String tag, Level level) {
+        // Level severity order: Trace -> Debug -> Info -> Warn -> Error
+        return switch (l) {
+            case OFF -> false;
+            case MESSAGES -> level.ordinal() >= Level.WARN.ordinal();
+            case VERBOSE -> true;
+        };
+    }
+
+    @Override
+    public void log(int depth, String tag, Level level, Throwable exception, MessageFormatter formatter, Object obj, Object... arguments) {
+        log(exception, obj == null ? null : obj.toString(), arguments);
+    }
+
+    @Override
+    public void log(String loggerClassName, String tag, Level level, Throwable exception, MessageFormatter formatter, Object obj, Object... arguments) {
+        log(exception, obj == null ? null : obj.toString(), arguments);
+    }
+
+    @Override
+    public void shutdown() {
+
+    }
+
+    private void log(Throwable exception, String message, Object[] arguments) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("HEJJJJ !");
+        if (message != null) {
+            if (arguments != null) {
+                builder.append(f.format(message, arguments));
+            } else {
+                builder.append(message);
+            }
+        }
+
+        switch (l) {
+            case VERBOSE -> {
+                if (exception != null)
+                    client.logTrace(new LogTraceParams(builder.toString(), exception.getLocalizedMessage()));
+                else client.logTrace(new LogTraceParams(builder.toString()));
+            }
+            case MESSAGES -> client.logTrace(new LogTraceParams(builder.toString()));
+        }
+    }
+
+    public enum LogLevel {OFF, MESSAGES, VERBOSE}
+}
