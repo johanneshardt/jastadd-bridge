@@ -19,6 +19,7 @@ Introduce setting that controls level of logging and send info to server.
 
 - Get initial settings in server with workspace/configuration request
 - Add a handler for workspace/didChangeConfiguration in server
+- Refresh extension after changing java home
 
 ## Restarts
 

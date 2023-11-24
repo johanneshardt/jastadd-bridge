@@ -1,14 +1,10 @@
 package org.dagjohannes.util;
 
-import org.eclipse.lsp4j.services.LanguageClient;
 import org.tinylog.Level;
 import org.tinylog.core.TinylogLoggingProvider;
-import org.tinylog.format.AdvancedMessageFormatter;
 import org.tinylog.format.MessageFormatter;
 import org.tinylog.provider.ContextProvider;
 import org.tinylog.provider.NopContextProvider;
-
-import java.util.Locale;
 
 
 /**
@@ -20,18 +16,10 @@ import java.util.Locale;
  * TODO possibly interface with logMessage, to show popups?
  */
 public class ClientLoggingProvider extends TinylogLoggingProvider {
-
-    private LanguageClient client;
     private LogLevel l;
-    private final AdvancedMessageFormatter f;
 
     public ClientLoggingProvider() {
         this.l = LogLevel.MESSAGES; // set level at instantiation
-        this.f = new AdvancedMessageFormatter(Locale.getDefault(), true);
-    }
-
-    public void setClient(LanguageClient c) {
-        this.client = c;
     }
 
     public void setLogLevel(String logLevel) {

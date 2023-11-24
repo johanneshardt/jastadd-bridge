@@ -16,15 +16,14 @@ public class Server implements LanguageServer, LanguageClientAware {
     private LanguageClient client;
     private final TextDocumentService textDocument;
     private final WorkspaceService workSpace;
-    private final String compilerPath;
     private ClientLoggingProvider clientLoggingProvider;
     boolean initialized = false;
 
     public Server(String compilerPath) {
         // TODO implement these interfaces
-        this.textDocument = new JastAddTDS(compilerPath);
-        this.workSpace = null;
-        this.compilerPath = compilerPath;
+        var tds = new JastAddTDS();
+        this.workSpace = tds;
+        this.textDocument = tds;
     }
 
     private CompletableFuture<Object> notInitializedError() {
@@ -37,11 +36,9 @@ public class Server implements LanguageServer, LanguageClientAware {
 
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
+        Logger.info("Initializing server...");
         // Logging
         clientLoggingProvider.setLogLevel(params.getTrace());
-        clientLoggingProvider.setClient(client);
-
-        Logger.info("Initializing server...");
         var clientCapabilities = params.getCapabilities().getWorkspace().getConfiguration(); // TODO handle these
         var serverCapabilities = new ServerCapabilities();
         var res = new InitializeResult(serverCapabilities);
@@ -86,7 +83,6 @@ public class Server implements LanguageServer, LanguageClientAware {
     public void connect(LanguageClient client) {
         this.client = client;
         this.clientLoggingProvider = (ClientLoggingProvider) org.tinylog.provider.ProviderRegistry.getLoggingProvider();
-        this.clientLoggingProvider.setClient(this.client);
         Logger.info("Connected to server!");
     }
 }
