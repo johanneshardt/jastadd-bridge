@@ -22,6 +22,7 @@ A synthesized method `lsp_hover()` returning a `String` on some `ASTNode` will p
 ### Diagnostics
 
 To provide diagnostic reports, the extension first assumes there is some synthesized method `lsp_diagnostics()`. This method must return a `Set` of some user-defined `Diagnostic` (most conveniently done using a `coll` attribute). This `Diagnostic` type can be named anything, but must contain the following methods:
+
 - `String message()` (The message to be displayed)
 - `int severity()` (Diagnostic type. 1 = error, 2 = warning, 3 = info, 4 = hint)
 - `int startLine()`
