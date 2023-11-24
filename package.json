@@ -4,7 +4,7 @@
   "description": "A language server for tools built with JastAdd.",
   "contributors": [
     "Johannes Hardt <me@johanneshardt.com>",
-    "Dag Hemberg"
+    "Dag Hemberg <dag.hemberg@gmail.com>"
   ],
   "license": "BSD-2-Clause",
   "version": "1.0.0",
@@ -78,6 +78,18 @@
           ],
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
+        },
+        "jastaddBridge.cacheStrategy": {
+          "type": "string",
+          "default": "partial",
+          "enum": [
+            "partial",
+            "purge"
+          ],
+          "enumDescriptions": [
+            "Reloads AST when file content changes.",
+            "Reloads the compiler when file content changes (sometimes needed to restore global state of your compiler)"
+          ]
         }
       }
     }
@@ -86,7 +98,9 @@
     "vscode:prepublish": "npm run jar & npm run compile",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
-    "jar": "cd server && ./gradlew jar",
+    "jar": "run-script-os",
+    "jar:win32": "cd server && gradlew jar",
+    "jar:default": "cd server && ./gradlew jar",
     "lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
     "postinstall": "cd client && npm install && cd ..",
     "test": "sh ./scripts/e2e.sh"
@@ -98,6 +112,7 @@
     "@typescript-eslint/parser": "^6.7.0",
     "eslint": "^8.35.0",
     "mocha": "^9.2.1",
+    "run-script-os": "^1.1.6",
     "typescript": "^5.2.2"
   },
   "dependencies": {

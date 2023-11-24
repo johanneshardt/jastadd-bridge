@@ -1,5 +1,7 @@
 package org.dagjohannes;
 
+import org.dagjohannes.util.ClientLoggingProvider;
+import org.dagjohannes.util.DiagnosticHandler;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
@@ -13,24 +15,15 @@ import static org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode.ServerNotInit
 public class Server implements LanguageServer, LanguageClientAware {
 
     private LanguageClient client;
-    private TextDocumentService textDocument;
-    private WorkspaceService workSpace;
-    private String compilerPath;
-    private boolean initialized = false;
+    private final TextDocumentService textDocument;
+    private final WorkspaceService workSpace;
+    private ClientLoggingProvider clientLoggingProvider;
+    boolean initialized = false;
 
-    public LanguageClient getClient() {
-        return client;
-    }
-
-    public String getCompilerPath() {
-        return compilerPath;
-    }
-
-    public Server(String compilerPath) {
-        // TODO implement these interfaces
-        this.workSpace = null;
-        this.compilerPath = compilerPath;
-        this.textDocument = new JastAddTDS(this);
+    public Server() {
+        var impl = new TextDocumentAndWorkspaceImpl();
+        this.workSpace = impl;
+        this.textDocument = impl;
     }
 
     private CompletableFuture<Object> notInitializedError() {
@@ -39,12 +32,12 @@ public class Server implements LanguageServer, LanguageClientAware {
         res.completeExceptionally(new ResponseErrorException(error));
         return res;
     }
-
-
+    
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-        Logger.debug("Initializing...");
-        
+        Logger.info("Initializing server...");
+        // Logging
+        clientLoggingProvider.setLogLevel(params.getTrace());
         var clientCapabilities = params.getCapabilities(); // TODO handle these
         var serverCapabilities = new ServerCapabilities();
         var res = new InitializeResult(serverCapabilities);
@@ -52,7 +45,6 @@ public class Server implements LanguageServer, LanguageClientAware {
         var tdcc = new TextDocumentClientCapabilities();
         tdcc.setDiagnostic(new DiagnosticCapabilities(true, true));
         clientCapabilities.setTextDocument(tdcc);
-
         serverCapabilities.setHoverProvider(true);
         serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
         serverCapabilities.setDiagnosticProvider(new DiagnosticRegistrationOptions("jab"));
@@ -65,6 +57,7 @@ public class Server implements LanguageServer, LanguageClientAware {
 
     @Override
     public CompletableFuture<Object> shutdown() {
+        Logger.info("Received shutdown request.");
         if (!initialized) {
             return notInitializedError();
         }
@@ -88,8 +81,15 @@ public class Server implements LanguageServer, LanguageClientAware {
     }
 
     @Override
+    public void setTrace(SetTraceParams params) {
+        clientLoggingProvider.setLogLevel(params.getValue());
+    } // TODO do we need this
+
+    @Override
     public void connect(LanguageClient client) {
         this.client = client;
-        client.logMessage(new MessageParams(MessageType.Info, "Connected to server!"));
+        this.clientLoggingProvider = (ClientLoggingProvider) org.tinylog.provider.ProviderRegistry.getLoggingProvider();
+        DiagnosticHandler.setClient(client);
+        Logger.info("Connected to server!");
     }
 }

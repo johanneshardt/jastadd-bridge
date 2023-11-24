@@ -26,7 +26,7 @@ public class NodesAtPosition {
             getTo(found, info, astNode, pos, new File(document).getAbsoluteFile().toPath());
 
         } catch (IOException e) {
-            Logger.error(e.toString()); // TODO good enough error handling?
+            Logger.error(e, "Couldn't load path: ", document); // TODO good enough error handling?
         }
         Collections.reverse(found); // Narrowest/smallest node first in the list
         return found;
@@ -36,8 +36,8 @@ public class NodesAtPosition {
         final Span nodePos;
         try {
             nodePos = astNode.getRecoveredSpan(info);
-        } catch (InvokeProblem e1) {
-            Logger.error(e1.toString());
+        } catch (InvokeProblem e) {
+            Logger.error(e);
             return;
         }
 

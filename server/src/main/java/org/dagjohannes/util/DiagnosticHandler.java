@@ -1,28 +1,28 @@
 package org.dagjohannes.util;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-import org.dagjohannes.Server;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DocumentDiagnosticReport;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.RelatedFullDocumentDiagnosticReport;
+import org.eclipse.lsp4j.services.LanguageClient;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class DiagnosticHandler {
-    private static Server server;
+    private static LanguageClient client;
 
-    public static void setServer(Server s) {
-        server = s;
+    public static void setClient(LanguageClient c) {
+        client = c;
     }
 
     public static void refresh() {
-        server.getClient().refreshDiagnostics();
+        client.refreshDiagnostics();
     }
 
     public static void clear(String uri) {
         var params = new PublishDiagnosticsParams(uri, List.of());
-        server.getClient().publishDiagnostics(params);
+        client.publishDiagnostics(params);
     }
 
     public static CompletableFuture<DocumentDiagnosticReport> report(List<Diagnostic> list) {
