@@ -26,7 +26,7 @@ public class Main {
             var output = socket.getOutputStream();
 
             // see https://github.com/eclipse-lsp4j/lsp4j/blob/main/documentation/README.md
-            var server = new Server(compilerPath);
+            var server = new Server();
             Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, input, output);
             LanguageClient client = launcher.getRemoteProxy();
             server.connect(client);

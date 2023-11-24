@@ -1,11 +1,7 @@
 import { ExecException, exec } from "child_process";
-import { PathLike, constants } from "fs";
+import { constants } from "fs";
 import { access } from "fs/promises";
 import LocateJavaHome from "locate-java-home";
-import {
-  IJavaHomeInfo,
-  ILocateJavaHome,
-} from "locate-java-home/js/es5/lib/interfaces";
 import common = require("mocha/lib/interfaces/common");
 import * as path from "path";
 import {
@@ -14,6 +10,7 @@ import {
   WorkspaceConfiguration,
   window,
   commands,
+  ConfigurationChangeEvent,
 } from "vscode";
 
 import {
@@ -26,61 +23,77 @@ import {
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
+  const client = await validateConfigAndLaunch(context);
+  // context.subscriptions.push(
+  //   workspace.onDidChangeConfiguration(async (e) => {
+  //     if (e.affectsConfiguration("jastaddBridge.overrideJavaHome")) {
+  //       await client
+  //         ?.stop(1000)
+  //         .catch(() => console.error("Failed to stop extension!"));
+  //       if (client) client.diagnostics.clear();
+  //       validateConfigAndLaunch(context);
+  //     }
+  //   })
+  // );
+}
+
+export async function validateConfigAndLaunch(
+  context: ExtensionContext
+): Promise<LanguageClient | undefined> {
   // load settings
   const settings = workspace.getConfiguration("jastaddBridge");
+  try {
+    const javaPath = await fetchJavaInstallations(settings);
+    console.log(`Using java installation at: ${path}`);
 
-  fetchJavaInstallations(settings)
-    .then((path) => {
-      console.log(`Using java installation at: ${path}`);
-
+    try {
       // Check if a jastadd compiler is specified in settings
-      access(
+      await access(
         settings.get("compiler.path"),
         constants.F_OK | constants.R_OK | constants.X_OK
-      )
-        .then(() => launchServer(path, settings, context))
-        .catch((err) => {
-          console.error(`Error reading file: ${err}`);
-          window
-            .showErrorMessage(
-              `No JastAdd compiler is defined. 
-              Either there isn't a path defined or it is invalid. 
-              See log for details.`,
-              "Configure"
-            )
-            .then((selection) =>
-              commands.executeCommand(
-                "workbench.action.openWorkspaceSettings",
-                "jastaddBridge.compiler.path"
-              )
-            );
-        });
-    })
-    .catch((err) => {
-      console.error(err);
+      );
+      return launchServer(javaPath, settings, context);
+    } catch (err) {
+      console.error(`Error reading file: ${err}`);
       window
         .showErrorMessage(
-          `No Java installation found (JDK 17 or higher required).
-          You might need to setup the $JAVA_HOME environment variable.
-          Alternatively, specify a path in the extension settings.
-          If you have already provided it, it may be incorrect.`,
-          "Change path to Java"
+          `No JastAdd compiler is defined. 
+        Either there isn't a path defined or it is invalid. 
+        See log for details.`,
+          "Configure"
         )
-        .then((selection) => {
+        .then((_selection) =>
           commands.executeCommand(
-            "workbench.action.openWorkspaceSettings",
-            "jastaddBridge.overrideJavaHome"
-          ); // TODO provide option to reload plugin here?
-        });
-    });
+            "workbench.action.openSettings",
+            "jastaddBridge.compiler.path"
+          )
+        );
+    }
+  } catch (err) {
+    console.error(err);
+    window
+      .showErrorMessage(
+        `No Java installation found (JDK 17 or higher required).
+      You might need to setup the $JAVA_HOME environment variable.
+      Alternatively, specify a path in the extension settings.
+      If you have already provided it, it may be incorrect.`,
+        "Change path to Java"
+      )
+      .then((_selection) => {
+        commands.executeCommand(
+          "workbench.action.openSettings",
+          "jastaddBridge.overrideJavaHome"
+        );
+      });
+  }
 }
 
 function launchServer(
   javaPath: string,
   settings: WorkspaceConfiguration,
   context: ExtensionContext
-) {
+): LanguageClient {
   const server = context.asAbsolutePath(path.join("server", "server.jar"));
 
   const port = 15990; // TODO determine port dynamically
@@ -114,12 +127,9 @@ function launchServer(
       // fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
       configurationSection: "jastaddBridge",
     },
-    // initializationOptions: {
-    //   trace: settings.get("trace.server"),
-    // },
   };
 
-  console.debug(`Starting server with arguments: ${serverOptions}`);
+  console.debug(`Starting server with arguments: ${serverOptions.run}`);
 
   // Create the language client and start the client.
   client = new LanguageClient(
@@ -131,6 +141,7 @@ function launchServer(
 
   // Start the client. This will also launch the server
   client.start();
+  return client;
 }
 
 function fetchJavaInstallations(
@@ -143,7 +154,7 @@ function fetchJavaInstallations(
     return new Promise((resolve, reject) => {
       exec(
         `"${javaBinary}" --version`, // TODO this is probably very fragile
-        (error: ExecException, stdout: string, stderr: string) => {
+        (error: ExecException, _stdout: string, _stderr: string) => {
           if (error) {
             reject(`Java install found at: "${userProvidedJava}" is invalid.`);
           } else {

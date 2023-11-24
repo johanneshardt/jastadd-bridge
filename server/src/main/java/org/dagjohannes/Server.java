@@ -51,6 +51,7 @@ public class Server implements LanguageServer, LanguageClientAware {
 
     @Override
     public CompletableFuture<Object> shutdown() {
+        Logger.info("Received shutdown request.");
         if (!initialized) {
             return notInitializedError();
         }
