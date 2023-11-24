@@ -17,32 +17,43 @@ The first command line argument your compiler takes should be a path to the text
 
 ### Hover
 
-Synthesizing a metho
-n
+A synthesized method `lsp_hover()` returning a `String` on some `ASTNode` will provide hover text for that node. The text is in Markdown, meaning it supports [links](https://assets.petco.com/petco/image/upload/f_auto,q_auto/green-tree-frog-care-sheet-hero), **bold** and *italic* and `code`.
 
 ### Diagnostics
 
-The extension assumes there is some
+To provide diagnostic reports, the extension first assumes there is some synthesized method `lsp_diagnostics()`. This method must return a `Set` of some user-defined `Diagnostic` (most conveniently done using a `coll` attribute). This `Diagnostic` type can be named anything, but must contain the following methods:
+- `String message()` (The message to be displayed)
+- `int severity()` (Diagnostic type. 1 = error, 2 = warning, 3 = info, 4 = hint)
+- `int startLine()`
+- `int startColumn()`
+- `int endLine()`
+- `int endColumn()`
+
+The methods `startLine`, `startColumn`, `endLine` and `endColumn` are used to determine where the diagnostic should be displayed. It's important to note that there is a difference between how `JastAdd` and `LSP` (language server protocol) handles these ranges, some some off-by-one tweaking might be necessary in order to get everything working as intended.
 
 ### Go to definition
 
-- TODO
+- Not implemented yet
 
 ### "Run" button
 
-- TODO
-
-### Inlay hints
-
-- TODO
-
-### Code completion
-
-- TODO
+- Not implemented yet
 
 ### Quick fixes
 
-- TODO
+- Not implemented yet
+
+### Syntax highlighting
+
+- Not implemented yet
+
+### Inlay hints
+
+- Not implemented yet
+
+### Code completion
+
+- Not implemented yet
 
 ## Building
 
