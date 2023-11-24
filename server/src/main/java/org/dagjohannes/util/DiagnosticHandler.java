@@ -10,18 +10,17 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.RelatedFullDocumentDiagnosticReport;
 
 public class DiagnosticHandler {
-    private Server server;
+    private static Server server;
 
-    // Currently not in use, but should be once Document is decoupled
-    public DiagnosticHandler(Server server) {
-        this.server = server;
+    public static void setServer(Server s) {
+        server = s;
     }
 
-    public void refresh() {
+    public static void refresh() {
         server.getClient().refreshDiagnostics();
     }
 
-    public void clear(String uri) {
+    public static void clear(String uri) {
         var params = new PublishDiagnosticsParams(uri, List.of());
         server.getClient().publishDiagnostics(params);
     }

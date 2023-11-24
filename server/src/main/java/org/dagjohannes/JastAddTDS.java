@@ -31,12 +31,11 @@ public class JastAddTDS implements TextDocumentService {
     // maybe cache like the last 3 edits? Since you often undo/redo and there is a version number
     @NonNull
     private Optional<Document> cachedDoc;
-    private DiagnosticHandler diagnosticsHandler;
 
     public JastAddTDS(Server server) {
         JastAddTDS.server = server;
         cachedDoc = Optional.empty();
-        diagnosticsHandler = new DiagnosticHandler(server);
+        DiagnosticHandler.setServer(server);
     }
 
     // Saving here: refresh doc
@@ -69,7 +68,7 @@ public class JastAddTDS implements TextDocumentService {
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
-        diagnosticsHandler.refresh();
+        DiagnosticHandler.refresh();
         Logger.info("opened");
     }
 
@@ -83,13 +82,13 @@ public class JastAddTDS implements TextDocumentService {
     public void didClose(DidCloseTextDocumentParams params) {
         cachedDoc = Optional.empty();
         var uri = params.getTextDocument().getUri();
-        diagnosticsHandler.clear(uri);
+        DiagnosticHandler.clear(uri);
         Logger.info("closed");
     }
 
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
-        diagnosticsHandler.refresh();
+        DiagnosticHandler.refresh();
         Logger.info("saved");
     }
 
