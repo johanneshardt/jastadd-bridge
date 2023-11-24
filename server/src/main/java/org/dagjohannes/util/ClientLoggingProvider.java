@@ -1,12 +1,11 @@
 package org.dagjohannes.util;
 
-import org.eclipse.lsp4j.LogTraceParams;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.tinylog.Level;
+import org.tinylog.core.TinylogLoggingProvider;
 import org.tinylog.format.AdvancedMessageFormatter;
 import org.tinylog.format.MessageFormatter;
 import org.tinylog.provider.ContextProvider;
-import org.tinylog.provider.LoggingProvider;
 import org.tinylog.provider.NopContextProvider;
 
 import java.util.Locale;
@@ -16,9 +15,11 @@ import java.util.Locale;
  * Interfaces with LSP for logTrace notifications.
  * ERROR, WARN are sent as logTrace
  * INFO, DEBUG, TRACE are sent as logTrace (with verbose)
+ * <p>
+ * Currently, we're just printing instead of sending window/logTrace messages, are there any drawbacks to this?
  * TODO possibly interface with logMessage, to show popups?
  */
-public class ClientLoggingProvider implements LoggingProvider {
+public class ClientLoggingProvider extends TinylogLoggingProvider {
 
     private LanguageClient client;
     private LogLevel l;
@@ -69,37 +70,17 @@ public class ClientLoggingProvider implements LoggingProvider {
 
     @Override
     public void log(int depth, String tag, Level level, Throwable exception, MessageFormatter formatter, Object obj, Object... arguments) {
-        log(exception, obj == null ? null : obj.toString(), arguments);
+        if (isEnabled(depth, tag, level)) {
+            var e = this.l.compareTo(LogLevel.VERBOSE) == 0 ? exception : null;
+            super.log(depth + 2, tag, level, e, formatter, obj, arguments);
+        }
     }
 
     @Override
     public void log(String loggerClassName, String tag, Level level, Throwable exception, MessageFormatter formatter, Object obj, Object... arguments) {
-        log(exception, obj == null ? null : obj.toString(), arguments);
-    }
-
-    @Override
-    public void shutdown() {
-
-    }
-
-    private void log(Throwable exception, String message, Object[] arguments) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("HEJJJJ !");
-        if (message != null) {
-            if (arguments != null) {
-                builder.append(f.format(message, arguments));
-            } else {
-                builder.append(message);
-            }
-        }
-
-        switch (l) {
-            case VERBOSE -> {
-                if (exception != null)
-                    client.logTrace(new LogTraceParams(builder.toString(), exception.getLocalizedMessage()));
-                else client.logTrace(new LogTraceParams(builder.toString()));
-            }
-            case MESSAGES -> client.logTrace(new LogTraceParams(builder.toString()));
+        if (isEnabled(0, tag, level)) {
+            var e = this.l.compareTo(LogLevel.VERBOSE) == 0 ? exception : null;
+            super.log(loggerClassName, tag, level, e, formatter, obj, arguments);
         }
     }
 

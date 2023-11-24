@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -45,8 +46,7 @@ public class JastAddTDS implements TextDocumentService {
                 })
                 .or(() -> Document.loadFile(params.getTextDocument().getUri()));
         var content = cachedDoc.flatMap(d -> {
-            // line, col are 1-indexed. Each line is 2^12 == 4096 long.
-            var nodes = NodesAtPosition.get(d.info, d.rootNode, params.getPosition(), d.location); // Rewrite our own TODO
+            var nodes = NodesAtPosition.get(d.info, d.rootNode, params.getPosition(), d.location);
             return nodes.stream().findFirst().flatMap(Properties::hover); // try to invoke the hover attribute
         }).orElse("*Hover not available.* You might need to define an attribute ```syn String ASTNode.hover()``` in your compiler.");
         var hover = new Hover(new MarkupContent(MarkupKind.MARKDOWN, content));
@@ -103,7 +103,7 @@ public class JastAddTDS implements TextDocumentService {
         public boolean isSame(String otherURI) {
             var other = resolveURI(otherURI);
             try {
-                return Files.isSameFile(new File(location).getAbsoluteFile().toPath(), new File(otherURI).getAbsoluteFile().toPath());
+                return Files.isSameFile(new File(location).getAbsoluteFile().toPath(), Paths.get(resolveURI(otherURI)));
             } catch (IOException e) {
                 Logger.error(e);
                 return false; // TODO could be better

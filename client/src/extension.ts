@@ -111,18 +111,19 @@ function launchServer(
     documentSelector: [{ scheme: "file", language: "jastadd" }], // TODO figure out extension
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+      // fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+      configurationSection: "jastaddBridge",
     },
-    initializationOptions: {
-      trace: settings.get("trace.server"),
-    },
+    // initializationOptions: {
+    //   trace: settings.get("trace.server"),
+    // },
   };
 
   console.debug(`Starting server with arguments: ${serverOptions}`);
 
   // Create the language client and start the client.
   client = new LanguageClient(
-    "jastadd-bridge",
+    "jastaddBridge", // has to match the package name in the settings
     "JastAdd Bridge",
     serverOptions,
     clientOptions

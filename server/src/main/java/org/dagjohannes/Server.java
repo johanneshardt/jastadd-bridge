@@ -37,17 +37,16 @@ public class Server implements LanguageServer, LanguageClientAware {
 
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-        System.out.println("Set log level to '" + "verbose" + "'");
-        clientLoggingProvider.setLogLevel("verbose");
+        // Logging
+        clientLoggingProvider.setLogLevel(params.getTrace());
         clientLoggingProvider.setClient(client);
+
         Logger.info("Initializing server...");
-        var clientCapabilities = params.getCapabilities(); // TODO handle these
+        var clientCapabilities = params.getCapabilities().getWorkspace().getConfiguration(); // TODO handle these
         var serverCapabilities = new ServerCapabilities();
         var res = new InitializeResult(serverCapabilities);
-
         serverCapabilities.setHoverProvider(true);
         serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
-
         client.showMessage(new MessageParams(MessageType.Warning, "HELLO HI HELLO WOW"));
         this.initialized = true;
         return CompletableFuture.supplyAsync(() -> res);

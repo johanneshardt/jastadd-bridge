@@ -3,6 +3,7 @@ package org.dagjohannes;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
+import org.tinylog.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -12,11 +13,11 @@ import java.util.List;
 public class Main {
     // TODO improve argument handling
     public static void main(String[] args) throws IOException {
-        System.out.println("Args received:\n  " + String.join("\n  ", args));
+        Logger.info("Args received:  {}", String.join("\n  ", args));
         var port = Integer.parseInt((args[args.length - 1]).split("=")[1]); // port is always last argument
         var compilerPath = args[0];
         var compilerArgs = List.of(args).subList(1, args.length - 1); // all other arguments are passed to the compiler
-        System.out.println("Server started, awaiting connection on ->" + port);
+        Logger.info("Server started, awaiting connection on ->" + port);
 
         // Start listening on localhost
         try {
@@ -29,7 +30,7 @@ public class Main {
             Launcher<LanguageClient> launcher = LSPLauncher.createServerLauncher(server, input, output);
             LanguageClient client = launcher.getRemoteProxy();
             server.connect(client);
-            System.out.println("Connected to client, listening...");
+            Logger.info("Connected to client, listening...");
             launcher.startListening();
         } catch (IOException e) {
             throw new RuntimeException(e);

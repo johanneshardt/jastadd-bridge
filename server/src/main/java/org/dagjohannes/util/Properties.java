@@ -40,7 +40,7 @@ public class Properties {
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
-            Logger.error("No property '" + methodName + "' found!");
+            Logger.error(e, "No property '" + methodName + "' found!");
             return Optional.empty();
         }
     }

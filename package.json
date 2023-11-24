@@ -79,7 +79,7 @@
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
         },
-        "jastattBridge.cacheStrategy": {
+        "jastaddBridge.cacheStrategy": {
           "type": "string",
           "default": "partial",
           "enum": [
