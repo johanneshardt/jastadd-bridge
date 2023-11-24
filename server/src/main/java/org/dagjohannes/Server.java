@@ -19,11 +19,10 @@ public class Server implements LanguageServer, LanguageClientAware {
     private ClientLoggingProvider clientLoggingProvider;
     boolean initialized = false;
 
-    public Server(String compilerPath) {
-        // TODO implement these interfaces
-        var tds = new JastAddTDS();
-        this.workSpace = tds;
-        this.textDocument = tds;
+    public Server() {
+        var impl = new TextDocumentAndWorkspaceImpl();
+        this.workSpace = impl;
+        this.textDocument = impl;
     }
 
     private CompletableFuture<Object> notInitializedError() {

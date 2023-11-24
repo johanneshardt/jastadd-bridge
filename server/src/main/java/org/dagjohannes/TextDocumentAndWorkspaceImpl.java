@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public class JastAddTDS implements TextDocumentService, WorkspaceService {
+public class TextDocumentAndWorkspaceImpl implements TextDocumentService, WorkspaceService {
     private static Configuration config;
     // maybe cache like the last 3 edits? Since you often undo/redo and there is a version number
     @NonNull
@@ -39,9 +39,7 @@ public class JastAddTDS implements TextDocumentService, WorkspaceService {
         // this is ONLY empty() if parsing the ast throws NullPointerException
         cachedDoc = cachedDoc
                 .filter(d -> d.location.toString()
-                        .equals(params.getTextDocument().getUri())).map(d -> {
-                    return d;
-                })
+                        .equals(params.getTextDocument().getUri()))
                 .or(() -> Document.loadFile(params.getTextDocument().getUri()));
         var content = cachedDoc.flatMap(d -> {
             var nodes = NodesAtPosition.get(d.info, d.rootNode, params.getPosition(), d.location);
@@ -94,7 +92,7 @@ public class JastAddTDS implements TextDocumentService, WorkspaceService {
             }
         };
         Logger.info("Received configuration: compiler path={}, compiler args={}. cache strategy={}", compilerPath, compilerArgs, cacheStrategy);
-        JastAddTDS.config = new Configuration(compilerPath, compilerArgs.asList().stream().map(JsonElement::getAsString).toList(), purgeCache);
+        TextDocumentAndWorkspaceImpl.config = new Configuration(compilerPath, compilerArgs.asList().stream().map(JsonElement::getAsString).toList(), purgeCache);
     }
 
     @Override
@@ -123,7 +121,6 @@ public class JastAddTDS implements TextDocumentService, WorkspaceService {
         }
 
         public boolean isSame(String otherURI) {
-            var other = resolveURI(otherURI);
             try {
                 return Files.isSameFile(new File(location).getAbsoluteFile().toPath(), Paths.get(resolveURI(otherURI)));
             } catch (IOException e) {
