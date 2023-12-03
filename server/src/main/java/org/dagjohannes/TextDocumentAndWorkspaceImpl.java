@@ -18,21 +18,13 @@ import java.util.concurrent.CompletableFuture;
 
 public class TextDocumentAndWorkspaceImpl implements TextDocumentService, WorkspaceService {
     public static Configuration config;
-    // maybe cache like the last 3 edits? Since you often undo/redo and there is a version number
-
-    // Saving here: refresh doc
-    // cachedDoc
-    //     .filter(d -> d.isSame(params.getTextDocument().getUri()))
-    //     .ifPresentOrElse(Document::refresh, () -> Document.loadFile(params.getTextDocument().getUri()));
-    // cachedDoc = cachedDoc.flatMap(Document::refresh); // TODO support multiple files
-
     Optional<Document> currentDocument = Optional.empty();
 
 
     @Override
     public CompletableFuture<Hover> hover(HoverParams params) {
         Logger.debug("Hovering at {}", params.getPosition());
-        currentDocument = Document.loadFile(currentDocument, params.getTextDocument());
+        currentDocument = Document.loadFile(params.getTextDocument());
         var response = currentDocument.flatMap(d -> NodesAtPosition
                 .get(d.info, d.rootNode, params.getPosition(), d.documentPath)
                 .stream()
@@ -101,8 +93,8 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public CompletableFuture<DocumentDiagnosticReport> diagnostic(DocumentDiagnosticParams params) {
+        currentDocument = Document.loadFile(params.getTextDocument());
         return currentDocument
-                .flatMap(d -> d.loadFile(params.getTextDocument()))
                 .flatMap(doc -> Properties
                         .getDiagnostics(doc.rootNode)
                         .map(DiagnosticHandler::report))
@@ -111,7 +103,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
-        currentDocument = Document.loadFile(currentDocument, params.getTextDocument());
+        currentDocument = Document.loadFile(params.getTextDocument());
 
         var response = currentDocument.map(d -> {
             var textEdit = new TextDocumentEdit(

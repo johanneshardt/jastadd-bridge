@@ -49,7 +49,7 @@ public class Document {
         return loadCached(old, new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()));
     }
 
-    public static Optional<Document> loadFile(Optional<Document> old, TextDocumentIdentifier id) {
+    public static Optional<Document> loadFile(TextDocumentIdentifier id) {
         if (config == null) {
             return Optional.empty();
         } else {
