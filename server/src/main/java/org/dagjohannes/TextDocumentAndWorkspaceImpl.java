@@ -32,7 +32,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     @Override
     public CompletableFuture<Hover> hover(HoverParams params) {
         Logger.debug("Hovering at {}", params.getPosition());
-        currentDocument = currentDocument.flatMap(d -> d.loadFile(params.getTextDocument()));
+        currentDocument = Document.loadFile(currentDocument, params.getTextDocument());
         var response = currentDocument.flatMap(d -> NodesAtPosition
                 .get(d.info, d.rootNode, params.getPosition(), d.documentPath)
                 .stream()
@@ -47,7 +47,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
-        currentDocument = currentDocument.flatMap(d -> d.loadFile(params.getTextDocument()));
+        currentDocument = Document.loadFile(currentDocument, params.getTextDocument());
 //        currentDocumentVersion = new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
         DiagnosticHandler.refresh();
         Logger.info("opened");
@@ -56,7 +56,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
         // TODO implement document change handling
-        currentDocument = currentDocument.flatMap((d -> d.loadFile(params.getTextDocument())));
+        currentDocument = Document.loadFile(currentDocument, params.getTextDocument());
         // only update diagnostics on save
         Logger.info("changed");
     }
