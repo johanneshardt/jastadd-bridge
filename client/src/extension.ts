@@ -49,10 +49,7 @@ export async function validateConfigAndLaunch(
 
     try {
       // Check if a jastadd compiler is specified in settings
-      await access(
-        settings.get("compiler.path"),
-        constants.F_OK | constants.R_OK | constants.X_OK
-      );
+      await access(settings.get("compiler.path"), constants.R_OK);
       return launchServer(javaPath, settings, context);
     } catch (err) {
       console.error(`Error reading file: ${err}`);
@@ -158,7 +155,7 @@ function fetchJavaInstallations(
           if (error) {
             reject(`Java install found at: "${userProvidedJava}" is invalid.`);
           } else {
-            resolve(userProvidedJava);
+            resolve(javaBinary);
           }
         }
       );

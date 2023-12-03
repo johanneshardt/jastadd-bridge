@@ -10,7 +10,7 @@
   "version": "1.0.0",
   "repository": {
     "type": "git",
-    "url": "https://bitbucket.org/edan70/jastaddlsp-dag-johannes/src"
+    "url": "https://github.com/johanneshardt/jastadd-bridge"
   },
   "publisher": "temp-publisher-change-this",
   "categories": [
