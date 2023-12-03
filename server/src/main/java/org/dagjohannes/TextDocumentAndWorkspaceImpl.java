@@ -1,40 +1,24 @@
 package org.dagjohannes;
 
-import codeprober.AstInfo;
-import codeprober.ast.AstNode;
-import codeprober.metaprogramming.AstNodeApiStyle;
-import codeprober.metaprogramming.TypeIdentificationStyle;
-import codeprober.protocol.PositionRecoveryStrategy;
-import codeprober.util.ASTProvider;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.dagjohannes.util.DiagnosticHandler;
+import org.dagjohannes.util.Document;
 import org.dagjohannes.util.NodesAtPosition;
 import org.dagjohannes.util.Properties;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.tinylog.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class TextDocumentAndWorkspaceImpl implements TextDocumentService, WorkspaceService {
-    private static Configuration config;
-    private VersionedTextDocumentIdentifier currentDocumentVersion; // TODO CHANGE
+    public static Configuration config;
     // maybe cache like the last 3 edits? Since you often undo/redo and there is a version number
-    @NonNull
-    private Optional<Document> cachedDoc = Optional.empty();
 
     // Saving here: refresh doc
     // cachedDoc
@@ -42,21 +26,15 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     //     .ifPresentOrElse(Document::refresh, () -> Document.loadFile(params.getTextDocument().getUri()));
     // cachedDoc = cachedDoc.flatMap(Document::refresh); // TODO support multiple files
 
+    Optional<Document> currentDocument = Optional.empty();
+
 
     @Override
     public CompletableFuture<Hover> hover(HoverParams params) {
         Logger.debug("Hovering at {}", params.getPosition());
-        Logger.info("hej");
-        // check if we have a cached document, load it otherwise
-        // this is ONLY empty() if parsing the ast throws NullPointerException
-        // cachedDoc = cachedDoc
-        //         .filter(d -> d.location.toString()
-        //                 .equals(params.getTextDocument().getUri()))
-        //         .or(() -> Document.loadFile(params.getTextDocument().getUri()));
-        cachedDoc = Document.loadFile(params.getTextDocument().getUri());
-        cachedDoc.ifPresent(d -> Logger.info("Loaded document: {}", d.location));
-        var response = cachedDoc.flatMap(d -> NodesAtPosition
-                .get(d.info, d.rootNode, params.getPosition(), d.location)
+        currentDocument = currentDocument.flatMap(d -> d.loadFile(params.getTextDocument()));
+        var response = currentDocument.flatMap(d -> NodesAtPosition
+                .get(d.info, d.rootNode, params.getPosition(), d.documentPath)
                 .stream()
                 .findFirst()
                 .flatMap(Properties::hover) // try to invoke the hover attribute
@@ -69,21 +47,23 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
-        currentDocumentVersion = new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
+        currentDocument = currentDocument.flatMap(d -> d.loadFile(params.getTextDocument()));
+//        currentDocumentVersion = new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
         DiagnosticHandler.refresh();
         Logger.info("opened");
     }
 
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
-        currentDocumentVersion = params.getTextDocument();
+        // TODO implement document change handling
+        currentDocument = currentDocument.flatMap((d -> d.loadFile(params.getTextDocument())));
         // only update diagnostics on save
         Logger.info("changed");
     }
 
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
-        cachedDoc = Optional.empty();
+        currentDocument = Optional.empty();
         var uri = params.getTextDocument().getUri();
         DiagnosticHandler.clear(uri);
         Logger.info("closed");
@@ -121,93 +101,34 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public CompletableFuture<DocumentDiagnosticReport> diagnostic(DocumentDiagnosticParams params) {
-        return Document
-                .loadFile(params.getTextDocument().getUri())
+        return currentDocument
+                .flatMap(d -> d.loadFile(params.getTextDocument()))
                 .flatMap(doc -> Properties
-                        .getDiagnostics(doc.rootNode())
+                        .getDiagnostics(doc.rootNode)
                         .map(DiagnosticHandler::report))
                 .orElseGet(DiagnosticHandler::emptyReport);
     }
 
     @Override
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
-        cachedDoc = Document.loadFile(params.getTextDocument().getUri());
+        currentDocument = Document.loadFile(currentDocument, params.getTextDocument());
 
-        TextDocumentEdit textEdit = new TextDocumentEdit(
-                currentDocumentVersion,
-                List.of(
-                        new TextEdit(new Range(new Position(1, 1), new Position(1, 2)), "hej")
-                ));
-        WorkspaceEdit edit = new WorkspaceEdit(List.of(Either.forLeft(textEdit)));
+        var response = currentDocument.map(d -> {
+            var textEdit = new TextDocumentEdit(
+                    d.ident,
+                    List.of(
+                            new TextEdit(new Range(new Position(1, 1), new Position(1, 2)), "hej")
+                    ));
 
-        CodeAction action = new CodeAction("thing");
-        action.setKind(CodeActionKind.QuickFix);
-        action.setDiagnostics(params.getContext().getDiagnostics());
-        action.setIsPreferred(true);
-        action.setEdit(edit);
+            var edit = new WorkspaceEdit(List.of(Either.forLeft(textEdit)));
+            CodeAction action = new CodeAction("thing");
+            action.setKind(CodeActionKind.QuickFix);
+            action.setDiagnostics(params.getContext().getDiagnostics());
+            action.setIsPreferred(true);
+            action.setEdit(edit);
+            return List.<Either<Command, CodeAction>>of(Either.forRight(action));
+        }).orElse(List.<Either<Command, CodeAction>>of());
 
-        return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
-    }
-
-    // känns som att denna behöver decouplas/omarbetas ganska rejält
-    private record Document(URI location, AstNode rootNode, AstInfo info) {
-        // TODO add option that calls purgeCache() before parseAst()
-        private static Optional<Document> parse(URI location) {
-            try {
-                var path = new File(location).getAbsoluteFile().toString();
-                if (config.purgeCache) ASTProvider.purgeCache();
-                // TODO pass compiler args?
-
-                var arguments = new ArrayList<>(List.of(path));
-                arguments.addAll(config.compilerArgs()); // User arguments are passed after the file path
-
-                var rootNode = new AstNode(
-                        ASTProvider.parseAst(config.compilerPath(),
-                                arguments.toArray(String[]::new)).rootNode
-                );
-
-                var info = new AstInfo(
-                        rootNode,
-                        PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
-                        AstNodeApiStyle.BEAVER_PACKED_BITS,
-                        TypeIdentificationStyle.REFLECTION
-                );
-
-                return Optional.of(new Document(location, rootNode, info));
-            } catch (NullPointerException e) {
-                Logger.error(e);
-                return Optional.empty();
-            }
-        }
-
-        public static Optional<Document> loadFile(String location) {
-            Logger.debug("Loading file: ", location);
-            var uri = resolveURI(location);
-            return Document.parse(uri);
-        }
-
-        public boolean isSame(String otherURI) {
-            try {
-                return Files.isSameFile(new File(location).getAbsoluteFile().toPath(), Paths.get(resolveURI(otherURI)));
-            } catch (IOException e) {
-                Logger.error(e);
-                return false; // TODO could be better
-            }
-        }
-
-        private static URI resolveURI(String documentURI) {
-            try {
-                return new URI(documentURI);
-            } catch (URISyntaxException e) {
-                throw new RuntimeException("Couldn't resolve path with URI: " + documentURI);
-            }
-        }
-
-        public Optional<Document> refresh() {
-            return Document.parse(this.location);
-        }
-    }
-
-    private record Configuration(String compilerPath, List<String> compilerArgs, boolean purgeCache) {
+        return CompletableFuture.completedFuture(response); // TODO fix
     }
 }
