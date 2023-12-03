@@ -39,6 +39,25 @@ public class Document {
         if (config == null) {
             return Optional.empty();
         }
+        return loadCached(old, vid);
+    }
+
+    public static Optional<Document> loadFile(Optional<Document> old, TextDocumentItem item) {
+        if (config == null) {
+            return Optional.empty();
+        }
+        return loadCached(old, new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()));
+    }
+
+    public static Optional<Document> loadFile(Optional<Document> old, TextDocumentIdentifier id) {
+        if (config == null) {
+            return Optional.empty();
+        } else {
+            return parse(id.getUri());
+        }
+    }
+
+    private static Optional<Document> loadCached(Optional<Document> old, VersionedTextDocumentIdentifier vid) {
         return old.flatMap(d -> {
             if (d.ident.equals(vid)) {
                 Logger.debug("{} was already cached!", vid.getUri());
@@ -50,31 +69,6 @@ public class Document {
             Logger.debug("Loading document: {}", vid.getUri());
             return parse(vid.getUri());
         });
-    }
-
-    public static Optional<Document> loadFile(Optional<Document> old, TextDocumentItem item) {
-        if (config == null) {
-            return Optional.empty();
-        }
-        return old.flatMap(d -> {
-            if (d.ident.equals(new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()))) {
-                Logger.debug("{} was already cached!", item.getUri());
-                return Optional.of(d);
-            } else {
-                return Optional.empty();
-            }
-        }).or(() -> {
-            Logger.debug("Loading document: {}", item.getUri());
-            return parse(item.getUri());
-        });
-    }
-
-    public static Optional<Document> loadFile(Optional<Document> old, TextDocumentIdentifier id) {
-        if (config == null) {
-            return Optional.empty();
-        } else {
-            return parse(id.getUri());
-        }
     }
 
 
