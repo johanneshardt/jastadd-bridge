@@ -12,6 +12,7 @@ import org.dagjohannes.util.DiagnosticHandler;
 import org.dagjohannes.util.NodesAtPosition;
 import org.dagjohannes.util.Properties;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
@@ -44,19 +45,25 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     @Override
     public CompletableFuture<Hover> hover(HoverParams params) {
         Logger.debug("Hovering at {}", params.getPosition());
+        Logger.info("hej");
         // check if we have a cached document, load it otherwise
         // this is ONLY empty() if parsing the ast throws NullPointerException
-        cachedDoc = cachedDoc
-                .filter(d -> d.location.toString()
-                        .equals(params.getTextDocument().getUri()))
-                .or(() -> Document.loadFile(params.getTextDocument().getUri()));
-        var content = cachedDoc.flatMap(d -> {
-            var nodes = NodesAtPosition.get(d.info, d.rootNode, params.getPosition(), d.location);
-            return nodes.stream().findFirst().flatMap(Properties::hover); // try to invoke the hover attribute
-        }).orElse("*Hover not available.* You might need to define an attribute ```syn String ASTNode.hover()``` in your compiler.");
-        var hover = new Hover(new MarkupContent(MarkupKind.MARKDOWN, content));
+        // cachedDoc = cachedDoc
+        //         .filter(d -> d.location.toString()
+        //                 .equals(params.getTextDocument().getUri()))
+        //         .or(() -> Document.loadFile(params.getTextDocument().getUri()));
+        cachedDoc = Document.loadFile(params.getTextDocument().getUri());
+        cachedDoc.ifPresent(d -> Logger.info("Loaded document: {}", d.location));
+        var response = cachedDoc.flatMap(d -> NodesAtPosition
+            .get(d.info, d.rootNode, params.getPosition(), d.location)
+            .stream()
+            .findFirst()
+            .flatMap(Properties::hover) // try to invoke the hover attribute
+            .map(h -> new Hover(new MarkupContent(MarkupKind.MARKDOWN, h)))
+        ).orElse(null);
+        // var hover = new Hover(new MarkupContent(MarkupKind.MARKDOWN, response));
 
-        return CompletableFuture.completedFuture(hover);
+        return CompletableFuture.completedFuture(response);
     }
 
     @Override
@@ -114,12 +121,32 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         return Document
                 .loadFile(params.getTextDocument().getUri())
                 .flatMap(doc -> Properties
-                        .getDiagnostics(doc.rootNode())
-                        .map(DiagnosticHandler::report))
+                    .getDiagnostics(doc.rootNode())
+                    .map(DiagnosticHandler::report))
                 .orElseGet(DiagnosticHandler::emptyReport);
     }
 
-    ;
+    @Override
+    public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
+        cachedDoc = Document.loadFile(params.getTextDocument().getUri());
+
+        CodeAction action = new CodeAction("thing");
+        action.setKind(CodeActionKind.QuickFix);
+        action.setDiagnostics(params.getContext().getDiagnostics());
+        action.setIsPreferred(true);
+
+        TextDocumentEdit textEdit = new TextDocumentEdit();
+        textEdit.setEdits(
+            List.of(
+                new TextEdit(new Range(new Position(1, 1), new Position(1, 2)), 
+                "hej")
+            )
+        );
+        WorkspaceEdit edit = new WorkspaceEdit(List.of(Either.forLeft(textEdit)));
+        action.setEdit(edit);
+
+        return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
+    };
 
     // känns som att denna behöver decouplas/omarbetas ganska rejält
     private record Document(URI location, AstNode rootNode, AstInfo info) {

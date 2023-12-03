@@ -8,6 +8,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.services.*;
 import org.tinylog.Logger;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode.ServerNotInitialized;
@@ -45,9 +46,20 @@ public class Server implements LanguageServer, LanguageClientAware {
         var tdcc = new TextDocumentClientCapabilities();
         tdcc.setDiagnostic(new DiagnosticCapabilities(true, true));
         clientCapabilities.setTextDocument(tdcc);
+
+        var wcc = new WorkspaceClientCapabilities();
+        var wec = new WorkspaceEditCapabilities();
+        wec.setDocumentChanges(true);
+        wcc.setWorkspaceEdit(wec);
+        wcc.setApplyEdit(true);
+        clientCapabilities.setWorkspace(wcc);
+
         serverCapabilities.setHoverProvider(true);
-        serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
+        serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
+        ExecuteCommandOptions eco = new ExecuteCommandOptions(List.of("pwd"));
+        serverCapabilities.setExecuteCommandProvider(eco);
         serverCapabilities.setDiagnosticProvider(new DiagnosticRegistrationOptions("jab"));
+        serverCapabilities.setCodeActionProvider(true);
 
         client.showMessage(new MessageParams(MessageType.Warning, "HELLO HI HELLO WOW"));
         this.initialized = true;
@@ -93,3 +105,5 @@ public class Server implements LanguageServer, LanguageClientAware {
         Logger.info("Connected to server!");
     }
 }
+
+// spara pekare till client i textdocumentandworkspaceimpl istället för i en statisk metod i diagnosticshandler

@@ -41,6 +41,10 @@ public class NodesAtPosition {
             return;
         }
 
+        // TODO explain this better
+        // if ASTNode.lsp_document_path() is implemented
+        // - but is wrong (such as always returning "abc") -
+        // then hover wont work due to this check
         var p = Properties.documentPath(astNode);
         if (p.isPresent() && Files.isSameFile(p.get(), documentPath)) { // TODO see if this handles common cases?
             return;
