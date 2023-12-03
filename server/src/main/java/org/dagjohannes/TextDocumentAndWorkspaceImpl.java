@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class TextDocumentAndWorkspaceImpl implements TextDocumentService, WorkspaceService {
     private static Configuration config;
+    private VersionedTextDocumentIdentifier currentDocumentVersion; // TODO CHANGE
     // maybe cache like the last 3 edits? Since you often undo/redo and there is a version number
     @NonNull
     private Optional<Document> cachedDoc = Optional.empty();
@@ -55,11 +56,11 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         cachedDoc = Document.loadFile(params.getTextDocument().getUri());
         cachedDoc.ifPresent(d -> Logger.info("Loaded document: {}", d.location));
         var response = cachedDoc.flatMap(d -> NodesAtPosition
-            .get(d.info, d.rootNode, params.getPosition(), d.location)
-            .stream()
-            .findFirst()
-            .flatMap(Properties::hover) // try to invoke the hover attribute
-            .map(h -> new Hover(new MarkupContent(MarkupKind.MARKDOWN, h)))
+                .get(d.info, d.rootNode, params.getPosition(), d.location)
+                .stream()
+                .findFirst()
+                .flatMap(Properties::hover) // try to invoke the hover attribute
+                .map(h -> new Hover(new MarkupContent(MarkupKind.MARKDOWN, h)))
         ).orElse(null);
         // var hover = new Hover(new MarkupContent(MarkupKind.MARKDOWN, response));
 
@@ -68,12 +69,14 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
+        currentDocumentVersion = new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
         DiagnosticHandler.refresh();
         Logger.info("opened");
     }
 
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
+        currentDocumentVersion = params.getTextDocument();
         // only update diagnostics on save
         Logger.info("changed");
     }
@@ -121,8 +124,8 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         return Document
                 .loadFile(params.getTextDocument().getUri())
                 .flatMap(doc -> Properties
-                    .getDiagnostics(doc.rootNode())
-                    .map(DiagnosticHandler::report))
+                        .getDiagnostics(doc.rootNode())
+                        .map(DiagnosticHandler::report))
                 .orElseGet(DiagnosticHandler::emptyReport);
     }
 
@@ -130,23 +133,21 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
         cachedDoc = Document.loadFile(params.getTextDocument().getUri());
 
+        TextDocumentEdit textEdit = new TextDocumentEdit(
+                currentDocumentVersion,
+                List.of(
+                        new TextEdit(new Range(new Position(1, 1), new Position(1, 2)), "hej")
+                ));
+        WorkspaceEdit edit = new WorkspaceEdit(List.of(Either.forLeft(textEdit)));
+
         CodeAction action = new CodeAction("thing");
         action.setKind(CodeActionKind.QuickFix);
         action.setDiagnostics(params.getContext().getDiagnostics());
         action.setIsPreferred(true);
-
-        TextDocumentEdit textEdit = new TextDocumentEdit();
-        textEdit.setEdits(
-            List.of(
-                new TextEdit(new Range(new Position(1, 1), new Position(1, 2)), 
-                "hej")
-            )
-        );
-        WorkspaceEdit edit = new WorkspaceEdit(List.of(Either.forLeft(textEdit)));
         action.setEdit(edit);
 
         return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
-    };
+    }
 
     // känns som att denna behöver decouplas/omarbetas ganska rejält
     private record Document(URI location, AstNode rootNode, AstInfo info) {
