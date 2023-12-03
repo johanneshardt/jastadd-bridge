@@ -11,7 +11,6 @@ import org.tinylog.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,9 +41,9 @@ public class NodesAtPosition {
         }
 
         var p = Properties.documentPath(astNode);
-        if (p.isPresent() && Files.isSameFile(p.get(), documentPath)) { // TODO see if this handles common cases?
-            return;
-        }
+//        if (p.isPresent() && Files.isSameFile(p.get(), documentPath)) { // TODO see if this handles common cases?
+//            return;
+//        }
 
         boolean includeNode = out.isEmpty() || (nodePos.start == 0 || nodePos.end == 0 || (nodePos.start <= pos && (nodePos.end + 1) >= pos));
         if (includeNode) {
