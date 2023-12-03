@@ -126,26 +126,30 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
                 .orElseGet(DiagnosticHandler::emptyReport);
     }
 
+    private boolean inRange(Range outer, Range inner) {
+        return outer.getStart().getLine() <= inner.getStart().getLine()
+                && outer.getStart().getCharacter() <= inner.getStart().getCharacter()
+                && outer.getEnd().getLine() >= inner.getEnd().getLine()
+                && outer.getEnd().getCharacter() >= inner.getEnd().getCharacter();
+    }
+
     @Override
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
         cachedDoc = Document.loadFile(params.getTextDocument().getUri());
+        var docId = new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), 0);
 
-        CodeAction action = new CodeAction("thing");
-        action.setKind(CodeActionKind.QuickFix);
-        action.setDiagnostics(params.getContext().getDiagnostics());
-        action.setIsPreferred(true);
-
-        TextDocumentEdit textEdit = new TextDocumentEdit();
-        textEdit.setEdits(
-            List.of(
-                new TextEdit(new Range(new Position(1, 1), new Position(1, 2)), 
-                "hej")
-            )
-        );
-        WorkspaceEdit edit = new WorkspaceEdit(List.of(Either.forLeft(textEdit)));
-        action.setEdit(edit);
-
-        return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
+        List<Either<Command, CodeAction>> actions = cachedDoc.flatMap(doc -> Properties
+            .getCodeActions(doc.rootNode(), docId)
+            .map(codeActions -> {
+                Logger.info("Code actions: {}", codeActions);
+                return codeActions
+                    .stream()
+                    .filter(d -> inRange(d.getDiagnostics().get(0).getRange(), params.getRange()))
+                    .map(Either::<Command, CodeAction>forRight)
+                    .toList();
+            })
+        ).orElse(List.of());
+        return CompletableFuture.completedFuture(actions);
     };
 
     // känns som att denna behöver decouplas/omarbetas ganska rejält
