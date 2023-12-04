@@ -24,18 +24,21 @@ import {
 let client: LanguageClient;
 
 export async function activate(context: ExtensionContext) {
-  const client = await validateConfigAndLaunch(context);
-  // context.subscriptions.push(
-  //   workspace.onDidChangeConfiguration(async (e) => {
-  //     if (e.affectsConfiguration("jastaddBridge.overrideJavaHome")) {
-  //       await client
-  //         ?.stop(1000)
-  //         .catch(() => console.error("Failed to stop extension!"));
-  //       if (client) client.diagnostics.clear();
-  //       validateConfigAndLaunch(context);
-  //     }
-  //   })
-  // );
+  let client = await validateConfigAndLaunch(context);
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration(async (e) => {
+      if (!client) {
+        return;
+      }
+      if (e.affectsConfiguration("jastaddBridge.overrideJavaHome")) {
+        await client
+          .stop()
+          .catch(() => console.error("Failed to stop extension!"));
+        client?.diagnostics?.clear();
+        client = await validateConfigAndLaunch(context);
+      }
+    })
+  );
 }
 
 export async function validateConfigAndLaunch(

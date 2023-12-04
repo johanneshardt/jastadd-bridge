@@ -22,6 +22,7 @@ A synthesized method `lsp_hover()` returning a `String` on some `ASTNode` will p
 ### Diagnostics
 
 To provide diagnostic reports, the extension first assumes there is some synthesized method `lsp_diagnostics()`. This method must return a `Set` of some user-defined `Diagnostic` (most conveniently done using a `coll` attribute). This `Diagnostic` type can be named anything, but must contain the following methods:
+
 - `String message()` (The message to be displayed)
 - `int severity()` (Diagnostic type. 1 = error, 2 = warning, 3 = info, 4 = hint)
 - `int startLine()`
@@ -31,15 +32,32 @@ To provide diagnostic reports, the extension first assumes there is some synthes
 
 The methods `startLine`, `startColumn`, `endLine` and `endColumn` are used to determine where the diagnostic should be displayed. It's important to note that there is a difference between how `JastAdd` and `LSP` (language server protocol) handles these ranges, some some off-by-one tweaking might be necessary in order to get everything working as intended.
 
+### Quick fixes
+
+*Quick fixes* are changes to code suggested by your compiler. In our implementation, they are closely coupled to diagnostics. A quickfix is meant to resolve a diagnostic message, may it be an error, anti-pattern or bad formatting. Supporting quick fixes means implementing an additional field `fixes` on your `Diagnostic` type.
+
+Fields on `Diagnostic`:
+
+- `Set<Edit> fixes()` (The edits that could resolve a problem indicated by that diagnostic)
+- `String codeActionTitle()` (What the quick fix should be called)
+
+The class here called `Edit` is meant to represent a single change to a document, that should help resolve the problem indicated by the associated diagnostic.
+
+Fields on `Edit`:
+
+- `int startLine()`
+- `int startColumn()`
+- `int endLine()`
+- `int endColumn()`
+- `String replacement()`
+  
+An `Edit` is applied to the document by replacing all text between start-end with the `replacement()` string. In the case that you simply want to insert text, you want **start** to equal **end** (`startLine == endLine && startLolumn == endColumn`). `replacement()` will then be inserted at that position, not overwriting other content.
+
 ### Go to definition
 
 - Not implemented yet
 
 ### "Run" button
-
-- Not implemented yet
-
-### Quick fixes
 
 - Not implemented yet
 
