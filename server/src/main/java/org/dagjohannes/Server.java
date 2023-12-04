@@ -60,6 +60,7 @@ public class Server implements LanguageServer, LanguageClientAware {
         serverCapabilities.setExecuteCommandProvider(eco);
         serverCapabilities.setDiagnosticProvider(new DiagnosticRegistrationOptions("jab"));
         serverCapabilities.setCodeActionProvider(true);
+        serverCapabilities.setDefinitionProvider(true);
 
         client.showMessage(new MessageParams(MessageType.Warning, "HELLO HI HELLO WOW"));
         this.initialized = true;

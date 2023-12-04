@@ -73,6 +73,28 @@ public class Properties {
         return new Diagnostic(range, message, severityEnum, "jastadd-bridge");
     }
 
+    public static Optional<LocationLink> getDefinition(AstNode rootNode, Position pos, String uri) {
+        
+        // return CompletableFuture.completedFuture(Either.forRight(List.of(loclink)));
+        var raw = invoke0(rootNode.underlyingAstNode, Object.class, prefix + "definition");
+        try {
+            return raw.map(d -> {
+                LocationLink loclink = new LocationLink();
+                int startLine = invoke0(d, Integer.class, "startLine").get();
+                int startCol = invoke0(d, Integer.class, "startCol").get();
+                int endLine = invoke0(d, Integer.class, "endLine").get();
+                int endCol = invoke0(d, Integer.class, "endCol").get();
+                Range range = new Range(new Position(startLine, startCol), new Position(endLine, endCol));
+                loclink.setTargetRange(range);
+                loclink.setTargetSelectionRange(range);
+                loclink.setTargetUri(uri);
+                return loclink;
+            });
+        } catch (NoSuchElementException e) {
+            return Optional.empty();
+        }
+    }
+
     public static Optional<List<CodeAction>> getCodeActions(AstNode rootNode, VersionedTextDocumentIdentifier docId) {
         var raw = invoke0(rootNode.underlyingAstNode, Set.class, prefix + "diagnostics");
         try {

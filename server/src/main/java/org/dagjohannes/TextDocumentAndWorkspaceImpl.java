@@ -130,5 +130,16 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         return CompletableFuture.completedFuture(actions);
     }
 
-    ;
+    @Override
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
+        currentDocument = Document.loadFile(params.getTextDocument());
+        List<LocationLink> loc = currentDocument.flatMap(doc -> {
+            var node = NodesAtPosition.get(doc.info, doc.rootNode, params.getPosition(), doc.documentPath).stream().findFirst().get();
+            return Properties
+                .getDefinition(node, params.getPosition(), params.getTextDocument().getUri())
+                .map(ll -> List.of(ll));
+        }).orElse(List.of());
+
+        return CompletableFuture.completedFuture(Either.forRight(loc));
+    }
 }
