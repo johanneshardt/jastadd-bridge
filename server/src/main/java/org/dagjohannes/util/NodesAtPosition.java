@@ -9,6 +9,7 @@ import org.eclipse.lsp4j.Position;
 import org.tinylog.Logger;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;

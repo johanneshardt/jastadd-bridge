@@ -83,7 +83,7 @@ An `Edit` is applied to the document by replacing all text between start-end wit
 
 ### Setup
 
-1. `git clone <git@bitbucket.org>:edan70/jastaddlsp-dag-johannes.git`
+1. `git clone git@bitbucket.org:edan70/jastaddlsp-dag-johannes.git`
 2. `cd jastaddlsp-dag-johannes`
 3. `npm ci` (clean install)
 
@@ -91,7 +91,7 @@ An `Edit` is applied to the document by replacing all text between start-end wit
 
 To run the language server press f5, or run the task "Launch Client" (located in the Run & Debug tab). Doing this will build the server as well. When the build is done a new window will open, with the extension running. Output can be viewed in the "Output" tab, when you select "JastAdd Bridge" in the dropdown.
 
-It is helpful to install the extension, since you can then change its settings in the menu before launching it, and configure a file association. This requires the packaging tool `vsce`, which can be installed with `npm install -g @vscode/vsce`.
+It is helpful to install the extension, since you can then change its settings in the menu before launching it, and configure a file association. This requires the packaging tool `vsce`, which can be installed with `npm install -g @vscode/vsce` (or run with npx vsce package).
 
 **Steps to install:**
 
