@@ -53,6 +53,7 @@ public class Document {
         if (config == null) {
             return Optional.empty();
         } else {
+            Logger.debug("Loading document: {}", id.getUri());
             return parse(id.getUri());
         }
     }

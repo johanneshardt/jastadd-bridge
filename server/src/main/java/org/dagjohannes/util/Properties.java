@@ -95,7 +95,7 @@ public class Properties {
                     if (!edits.isEmpty()) {
                         list.add(action);
                     }
-                    
+
                     List<TextEdit> textEdits = new ArrayList<>();
                     for (Object edit : edits) {
                         int startLine = invoke0(edit, Integer.class, "startLine").get();
@@ -142,9 +142,10 @@ public class Properties {
             return Optional.of(type.cast(obj.getClass().getMethod(methodName).invoke(obj)));
 
         } catch (IllegalAccessException | InvocationTargetException e) {
+            // TODO handle wrong cast type gracefully
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
-            Logger.error(e, "No property '" + methodName + "' found!");
+            Logger.error(e, "No property '" + methodName + "' found on '" + obj + "'");
             return Optional.empty();
         }
     }

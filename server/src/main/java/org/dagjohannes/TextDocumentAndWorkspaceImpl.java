@@ -23,8 +23,12 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public CompletableFuture<Hover> hover(HoverParams params) {
+        var v = currentDocument.map(d -> {
+            Logger.debug(d.ident);
+            return d.ident;
+        }).orElse(new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), 1));
         Logger.debug("Hovering at {}", params.getPosition());
-        currentDocument = Document.loadFile(params.getTextDocument());
+        currentDocument = Document.loadFile(currentDocument, v);
         var response = currentDocument.flatMap(d -> NodesAtPosition
                 .get(d.info, d.rootNode, params.getPosition(), d.documentPath)
                 .stream()
