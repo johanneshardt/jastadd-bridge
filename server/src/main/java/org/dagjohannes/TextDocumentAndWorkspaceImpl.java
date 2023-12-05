@@ -18,18 +18,18 @@ import java.util.concurrent.CompletableFuture;
 
 public class TextDocumentAndWorkspaceImpl implements TextDocumentService, WorkspaceService {
     public static Configuration config;
-    Optional<Document> currentDocument = Optional.empty();
+    Optional<Document> doc = Optional.empty();
 
 
     @Override
     public CompletableFuture<Hover> hover(HoverParams params) {
-        var v = currentDocument.map(d -> {
+        var v = doc.map(d -> {
             Logger.debug(d.ident);
             return d.ident;
         }).orElse(new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), 1));
         Logger.debug("Hovering at {}", params.getPosition());
-        currentDocument = Document.loadFile(currentDocument, v);
-        var response = currentDocument.flatMap(d -> NodesAtPosition
+        doc = Document.loadFile(doc, v);
+        var response = doc.flatMap(d -> NodesAtPosition
                 .get(d.info, d.rootNode, params.getPosition(), d.documentPath)
                 .stream()
                 .findFirst()
@@ -43,7 +43,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
-        currentDocument = Document.loadFile(currentDocument, params.getTextDocument());
+        doc = Document.loadFile(doc, params.getTextDocument());
 //        currentDocumentVersion = new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
         DiagnosticHandler.refresh();
         Logger.info("opened");
@@ -52,14 +52,14 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
         // TODO implement document change handling
-        currentDocument = Document.loadFile(currentDocument, params.getTextDocument());
+        doc = Document.loadFile(doc, params.getTextDocument());
         // only update diagnostics on save
         Logger.info("changed");
     }
 
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
-        currentDocument = Optional.empty();
+        doc = Optional.empty();
         var uri = params.getTextDocument().getUri();
         DiagnosticHandler.clear(uri);
         Logger.info("closed");
@@ -92,15 +92,22 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-        Logger.error("Not implemented yet!");
+        doc.ifPresent(d -> {
+            var uris = params
+                    .getChanges()
+                    .stream()
+                    .map(FileEvent::getUri)
+                    .toList();
+            if (uris.contains(d.ident.getUri())) d.refresh();
+        });
     }
 
     @Override
     public CompletableFuture<DocumentDiagnosticReport> diagnostic(DocumentDiagnosticParams params) {
-        currentDocument = Document.loadFile(params.getTextDocument());
-        return currentDocument
-                .flatMap(doc -> Properties
-                        .getDiagnostics(doc.rootNode)
+        doc = Document.loadFile(doc, params.getTextDocument());
+        return doc
+                .flatMap(d -> Properties
+                        .getDiagnostics(d.rootNode)
                         .map(DiagnosticHandler::report))
                 .orElseGet(DiagnosticHandler::emptyReport);
     }
@@ -114,15 +121,15 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
-        currentDocument = Document.loadFile(params.getTextDocument());
+        doc = Document.loadFile(doc, params.getTextDocument());
 
-        List<Either<Command, CodeAction>> actions = currentDocument.flatMap(doc -> Properties
-                .getCodeActions(doc.rootNode, doc.ident)
+        List<Either<Command, CodeAction>> actions = doc.flatMap(d -> Properties
+                .getCodeActions(d.rootNode, d.ident)
                 .map(codeActions -> {
                     Logger.info("Code actions: {}", codeActions);
                     return codeActions
                             .stream()
-                            .filter(d -> inRange(d.getDiagnostics().get(0).getRange(), params.getRange()))
+                            .filter(a -> inRange(a.getDiagnostics().get(0).getRange(), params.getRange()))
                             .map(Either::<Command, CodeAction>forRight)
                             .toList();
                 })
@@ -132,12 +139,12 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
-        currentDocument = Document.loadFile(params.getTextDocument());
-        List<LocationLink> loc = currentDocument.flatMap(doc -> {
-            var node = NodesAtPosition.get(doc.info, doc.rootNode, params.getPosition(), doc.documentPath).stream().findFirst().get();
+        doc = Document.loadFile(doc, params.getTextDocument());
+        List<LocationLink> loc = doc.flatMap(d -> {
+            var node = NodesAtPosition.get(d.info, d.rootNode, params.getPosition(), d.documentPath).stream().findFirst().get();
             return Properties
-                .getDefinition(node, params.getPosition(), params.getTextDocument().getUri())
-                .map(ll -> List.of(ll));
+                    .getDefinition(node, params.getPosition(), params.getTextDocument().getUri())
+                    .map(List::of);
         }).orElse(List.of());
 
         return CompletableFuture.completedFuture(Either.forRight(loc));

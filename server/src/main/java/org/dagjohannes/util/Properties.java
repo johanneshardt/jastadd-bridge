@@ -1,6 +1,10 @@
 package org.dagjohannes.util;
 
+import codeprober.AstInfo;
 import codeprober.ast.AstNode;
+import codeprober.metaprogramming.AstNodeApiStyle;
+import codeprober.metaprogramming.TypeIdentificationStyle;
+import codeprober.protocol.PositionRecoveryStrategy;
 import org.eclipse.lsp4j.*;
 import org.tinylog.Logger;
 
@@ -74,20 +78,22 @@ public class Properties {
     }
 
     public static Optional<LocationLink> getDefinition(AstNode rootNode, Position pos, String uri) {
-        
-        // return CompletableFuture.completedFuture(Either.forRight(List.of(loclink)));
         var raw = invoke0(rootNode.underlyingAstNode, Object.class, prefix + "definition");
         try {
             return raw.map(d -> {
                 LocationLink loclink = new LocationLink();
-                int startLine = invoke0(d, Integer.class, "startLine").get();
-                int startCol = invoke0(d, Integer.class, "startCol").get();
-                int endLine = invoke0(d, Integer.class, "endLine").get();
-                int endCol = invoke0(d, Integer.class, "endCol").get();
-                Range range = new Range(new Position(startLine, startCol), new Position(endLine, endCol));
+                var destNode = new AstNode(d);
+                var info = new AstInfo(
+                        destNode,
+                        PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
+                        AstNodeApiStyle.BEAVER_PACKED_BITS,
+                        TypeIdentificationStyle.REFLECTION
+                );
+                var span = destNode.getRecoveredSpan(info);
+                Range range = new Range(new Position(span.getStartLine() - 1, span.getStartColumn() - 1), new Position(span.getEndLine() - 1, span.getEndColumn()));
                 loclink.setTargetRange(range);
                 loclink.setTargetSelectionRange(range);
-                loclink.setTargetUri(uri);
+                loclink.setTargetUri(uri); // TODO maybe multifile support
                 return loclink;
             });
         } catch (NoSuchElementException e) {

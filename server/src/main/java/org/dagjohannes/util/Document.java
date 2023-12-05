@@ -49,12 +49,21 @@ public class Document {
         return loadCached(old, new VersionedTextDocumentIdentifier(item.getUri(), item.getVersion()));
     }
 
-    public static Optional<Document> loadFile(TextDocumentIdentifier id) {
+    public static Optional<Document> loadFile(Optional<Document> old, TextDocumentIdentifier id) {
         if (config == null) {
             return Optional.empty();
         } else {
-            Logger.debug("Loading document: {}", id.getUri());
-            return parse(id.getUri());
+            return old.flatMap(d -> {
+                if (d.ident.getUri().equals(id.getUri())) {
+                    Logger.debug("{} was already cached!", id.getUri());
+                    return Optional.of(d);
+                } else {
+                    return Optional.empty();
+                }
+            }).or(() -> {
+                Logger.debug("Loading document: {}", id.getUri());
+                return parse(id.getUri());
+            });
         }
     }
 
@@ -69,6 +78,15 @@ public class Document {
         }).or(() -> {
             Logger.debug("Loading document: {}", vid.getUri());
             return parse(vid.getUri());
+        });
+    }
+
+    public void refresh() {
+        parse(this.ident.getUri()).ifPresent(d -> {
+            this.ident = d.ident;
+            this.documentPath = d.documentPath;
+            this.info = d.info;
+            this.rootNode = d.rootNode;
         });
     }
 
