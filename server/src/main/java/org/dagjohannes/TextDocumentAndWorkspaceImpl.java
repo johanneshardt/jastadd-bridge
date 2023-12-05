@@ -159,16 +159,14 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         doc = Document.loadFile(doc, params.getTextDocument());
         List<? extends CodeLens> lenses = doc.flatMap(doc -> Properties
                 .getRunLens(doc.rootNode)
-                .map(r -> List.of(r))
+                .map(List::of)
         ).orElse(List.of());
         return CompletableFuture.completedFuture(lenses);
     }
 
     @Override
     public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
-        doc.ifPresent(d -> {
-            Properties.run(d.rootNode);
-        });
+        doc.ifPresent(d -> Properties.run(d.rootNode));
         return CompletableFuture.completedFuture(null);
 
     }

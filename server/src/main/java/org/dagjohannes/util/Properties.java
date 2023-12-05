@@ -50,10 +50,10 @@ public class Properties {
             codeLens.setCommand(cmd);
             AstNode main = new AstNode(o);
             AstInfo info = new AstInfo(
-                main,
-                PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
-                AstNodeApiStyle.BEAVER_PACKED_BITS,
-                TypeIdentificationStyle.REFLECTION
+                    main,
+                    PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
+                    AstNodeApiStyle.BEAVER_PACKED_BITS,
+                    TypeIdentificationStyle.REFLECTION
             );
             var span = main.getRecoveredSpan(info);
             var line = new Position(span.getStartLine() - 1, span.getEndLine() - 1);
@@ -173,7 +173,7 @@ public class Properties {
         var raw = invoke0(rootNode.underlyingAstNode, Set.class, prefix + "diagnostics");
         try {
             return raw.map(s -> {
-                List<Diagnostic> list = new ArrayList<Diagnostic>();
+                List<Diagnostic> list = new ArrayList<>();
                 for (Object diag : s) list.add(extractDiagnostic(diag));
                 return list;
             });
