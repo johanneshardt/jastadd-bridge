@@ -15,24 +15,6 @@ import java.util.*;
 public class Properties {
     private static final String prefix = "lsp_";
 
-    public class Pair<A, B> {
-        private final A first;
-        private final B second;
-
-        public Pair(A first, B second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        public A first() {
-            return first;
-        }
-
-        public B second() {
-            return second;
-        }
-    }
-
     /**
      * For accessing hover information provided by the {@code String ASTNode.lsp_hover()} attribute.
      * Text can be styled through GitHub-flavored markdown.
@@ -53,6 +35,42 @@ public class Properties {
      */
     public static Optional<Path> documentPath(AstNode node) {
         return invoke0(node.underlyingAstNode, Path.class, prefix + "document_path");
+    }
+
+    // syn ASTNode Program.lsp_main() = lookup("main");
+    // void Program.lsp_run() {
+    //   eval();
+    // }
+
+    public static Optional<CodeLens> getRunLens(AstNode node) {
+        var raw = invoke0(node.underlyingAstNode, Object.class, prefix + "main");
+        return raw.map(o -> {
+            CodeLens codeLens = new CodeLens();
+            Command cmd = new Command("Run ▶", "jastaddBridge.run");
+            codeLens.setCommand(cmd);
+            AstNode main = new AstNode(o);
+            AstInfo info = new AstInfo(
+                main,
+                PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
+                AstNodeApiStyle.BEAVER_PACKED_BITS,
+                TypeIdentificationStyle.REFLECTION
+            );
+            var span = main.getRecoveredSpan(info);
+            var line = new Position(span.getStartLine() - 1, span.getEndLine() - 1);
+            var col = new Position(span.getStartColumn() - 1, span.getEndColumn() - 1);
+            codeLens.setRange(new Range(line, col));
+            return codeLens;
+        });
+    }
+
+    public static void run(AstNode node) {
+        try {
+            node.underlyingAstNode.getClass().getMethod(prefix + "run").invoke(node.underlyingAstNode);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            Logger.error("No property '" + prefix + "run' found!");
+        }
     }
 
     private static Diagnostic extractDiagnostic(Object diag) {

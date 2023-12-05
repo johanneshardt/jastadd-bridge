@@ -18,6 +18,7 @@ public class DiagnosticHandler {
 
     public static void refresh() {
         client.refreshDiagnostics();
+        client.refreshCodeLenses();
     }
 
     public static void clear(String uri) {

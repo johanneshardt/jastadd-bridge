@@ -7,6 +7,7 @@ import org.dagjohannes.util.Document;
 import org.dagjohannes.util.NodesAtPosition;
 import org.dagjohannes.util.Properties;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
@@ -29,16 +30,19 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         }).orElse(new VersionedTextDocumentIdentifier(params.getTextDocument().getUri(), 1));
         Logger.debug("Hovering at {}", params.getPosition());
         doc = Document.loadFile(doc, v);
-        var response = doc.flatMap(d -> NodesAtPosition
-                .get(d.info, d.rootNode, params.getPosition(), d.documentPath)
-                .stream()
-                .findFirst()
-                .flatMap(Properties::hover) // try to invoke the hover attribute
-                .map(h -> new Hover(new MarkupContent(MarkupKind.MARKDOWN, h)))
-        ).orElse(null);
+        return CompletableFutures.computeAsync(c -> {
+            c.checkCanceled();
+            return doc.flatMap(d -> NodesAtPosition
+                    .get(d.info, d.rootNode, params.getPosition(), d.documentPath)
+                    .stream()
+                    .findFirst()
+                    .flatMap(Properties::hover) // try to invoke the hover attribute
+                    .map(h -> new Hover(new MarkupContent(MarkupKind.MARKDOWN, h)))
+            ).orElse(null);
+        });
         // var hover = new Hover(new MarkupContent(MarkupKind.MARKDOWN, response));
 
-        return CompletableFuture.completedFuture(response);
+        // return CompletableFuture.completedFuture(response);
     }
 
     @Override
@@ -148,5 +152,24 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         }).orElse(List.of());
 
         return CompletableFuture.completedFuture(Either.forRight(loc));
+    }
+
+    @Override
+    public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
+        doc = Document.loadFile(doc, params.getTextDocument());
+        List<? extends CodeLens> lenses = doc.flatMap(doc -> Properties
+                .getRunLens(doc.rootNode)
+                .map(r -> List.of(r))
+        ).orElse(List.of());
+        return CompletableFuture.completedFuture(lenses);
+    }
+
+    @Override
+    public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
+        doc.ifPresent(d -> {
+            Properties.run(d.rootNode);
+        });
+        return CompletableFuture.completedFuture(null);
+
     }
 }

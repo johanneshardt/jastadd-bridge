@@ -56,11 +56,12 @@ public class Server implements LanguageServer, LanguageClientAware {
 
         serverCapabilities.setHoverProvider(true);
         serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
-        ExecuteCommandOptions eco = new ExecuteCommandOptions(List.of("pwd"));
+        ExecuteCommandOptions eco = new ExecuteCommandOptions(List.of("jastaddBridge.run"));
         serverCapabilities.setExecuteCommandProvider(eco);
         serverCapabilities.setDiagnosticProvider(new DiagnosticRegistrationOptions("jab"));
         serverCapabilities.setCodeActionProvider(true);
         serverCapabilities.setDefinitionProvider(true);
+        serverCapabilities.setCodeLensProvider(new CodeLensOptions(true));
 
         client.showMessage(new MessageParams(MessageType.Warning, "HELLO HI HELLO WOW"));
         this.initialized = true;
