@@ -40,9 +40,6 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
                     .map(h -> new Hover(new MarkupContent(MarkupKind.MARKDOWN, h)))
             ).orElse(null);
         });
-        // var hover = new Hover(new MarkupContent(MarkupKind.MARKDOWN, response));
-
-        // return CompletableFuture.completedFuture(response);
     }
 
     @Override
@@ -57,6 +54,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     public void didChange(DidChangeTextDocumentParams params) {
         // TODO implement document change handling
         doc = Document.loadFile(doc, params.getTextDocument());
+        DiagnosticHandler.refresh();
         // only update diagnostics on save
         Logger.info("changed");
     }
@@ -71,6 +69,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
+        doc.ifPresent(d -> d.refresh());
         DiagnosticHandler.refresh();
         Logger.info("saved");
     }
