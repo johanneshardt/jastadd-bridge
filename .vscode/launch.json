@@ -24,11 +24,12 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceRoot}",
 				"--extensionTestsPath=${workspaceRoot}/client/out/test/index",
-				"${workspaceRoot}/client/testFixture"
+				"${workspaceRoot}/client/testFiles"
 			],
 			"outFiles": [
 				"${workspaceRoot}/client/out/test/**/*.js"
-			]
+			],
+			"preLaunchTask": "build server & client"
 		}
 	]
 }
