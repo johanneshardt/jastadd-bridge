@@ -56,8 +56,10 @@ public class Properties {
                     TypeIdentificationStyle.REFLECTION
             );
             var span = main.getRecoveredSpan(info);
-            var line = new Position(span.getStartLine() - 1, span.getEndLine() - 1);
-            var col = new Position(span.getStartColumn() - 1, span.getEndColumn() - 1);
+            Logger.info(main);
+            Logger.info(span);
+            var line = new Position(span.getStartLine() - 1, span.getStartColumn() - 1);
+            var col = new Position(span.getEndLine() - 1, span.getEndColumn() - 1);
             codeLens.setRange(new Range(line, col));
             return codeLens;
         });

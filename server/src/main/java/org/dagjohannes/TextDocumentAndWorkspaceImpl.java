@@ -146,7 +146,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         List<LocationLink> loc = doc.flatMap(d -> {
             var node = NodesAtPosition.get(d.info, d.rootNode, params.getPosition(), d.documentPath).stream().findFirst().get();
             return Properties
-                    .getDefinition(node, params.getPosition(), params.getTextDocument().getUri())
+                    .getDefinition(node, params.getPosition(), params.getTextDocument().getUri(), d.info)
                     .map(List::of);
         }).orElse(List.of());
 
@@ -167,6 +167,5 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
         doc.ifPresent(d -> Properties.run(d.rootNode));
         return CompletableFuture.completedFuture(null);
-
     }
 }
