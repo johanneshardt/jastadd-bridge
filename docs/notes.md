@@ -13,13 +13,18 @@ Before publishing, we should test whether the `vscode:prepublish` script works!
 
 ## Logging
 
-Introduce setting that controls level of logging and send info to server.
+Introduce setting that controls level of logging and send info to server. - DONE
 
 ## Settings
 
-- Get initial settings in server with workspace/configuration request
-- Add a handler for workspace/didChangeConfiguration in server
-- Refresh extension after changing java home
+- Get initial settings in server with workspace/configuration request - DONE
+- Add a handler for workspace/didChangeConfiguration in server - DONE
+- Refresh extension after changing java home - DONE
+
+## Caching
+
+- Diagnostics are not cleared correctly in some cases
+- Can't rename jastadd files, they seem to be locked by the extension
 
 ## Restarts
 
