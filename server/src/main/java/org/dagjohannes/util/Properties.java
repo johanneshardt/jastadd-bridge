@@ -95,20 +95,26 @@ public class Properties {
         return new Diagnostic(range, message, severityEnum, "jastadd-bridge");
     }
 
-    public static Optional<LocationLink> getDefinition(AstNode rootNode, Position pos, String uri) {
+    public static Optional<LocationLink> getDefinition(AstNode rootNode, Position pos, String uri, AstInfo info) {
         var raw = invoke0(rootNode.underlyingAstNode, Object.class, prefix + "definition");
         try {
             return raw.map(d -> {
                 LocationLink loclink = new LocationLink();
                 var destNode = new AstNode(d);
-                var info = new AstInfo(
-                        destNode,
-                        PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
-                        AstNodeApiStyle.BEAVER_PACKED_BITS,
-                        TypeIdentificationStyle.REFLECTION
-                );
+                Logger.info(destNode);
+                Logger.info(destNode.underlyingAstNode);
                 var span = destNode.getRecoveredSpan(info);
-                Range range = new Range(new Position(span.getStartLine() - 1, span.getStartColumn() - 1), new Position(span.getEndLine() - 1, span.getEndColumn()));
+                Logger.info(span);
+                Range range = new Range(
+                    new Position(
+                        span.getStartLine() - 1, 
+                        span.getStartColumn() - 1
+                    ), 
+                    new Position(
+                        span.getEndLine() - 1, 
+                        span.getEndColumn()
+                    )
+                );
                 loclink.setTargetRange(range);
                 loclink.setTargetSelectionRange(range);
                 loclink.setTargetUri(uri); // TODO maybe multifile support
