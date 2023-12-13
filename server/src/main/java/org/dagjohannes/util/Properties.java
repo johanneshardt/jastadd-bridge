@@ -78,9 +78,9 @@ public class Properties {
     private static Diagnostic extractDiagnostic(Object diag) {
         String message = invoke0(diag, String.class, "message").get();
         int startLine = invoke0(diag, Integer.class, "startLine").get();
-        int startCol = invoke0(diag, Integer.class, "startCol").get();
+        int startCol = invoke0(diag, Integer.class, "startColumn").get();
         int endLine = invoke0(diag, Integer.class, "endLine").get();
-        int endCol = invoke0(diag, Integer.class, "endCol").get();
+        int endCol = invoke0(diag, Integer.class, "endColumn").get();
         int severity = invoke0(diag, Integer.class, "severity").get();
 
         var start = new Position(startLine, startCol);
@@ -153,9 +153,9 @@ public class Properties {
                     List<TextEdit> textEdits = new ArrayList<>();
                     for (Object edit : edits) {
                         int startLine = invoke0(edit, Integer.class, "startLine").get();
-                        int startCol = invoke0(edit, Integer.class, "startCol").get();
+                        int startCol = invoke0(edit, Integer.class, "startColumn").get();
                         int endLine = invoke0(edit, Integer.class, "endLine").get();
-                        int endCol = invoke0(edit, Integer.class, "endCol").get();
+                        int endCol = invoke0(edit, Integer.class, "endColumn").get();
                         String replacementText = invoke0(edit, String.class, "replacement").get();
                         var start = new Position(startLine, startCol);
                         var end = new Position(endLine, endCol);

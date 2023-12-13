@@ -38,7 +38,7 @@ tasks.jar {
                     .map { zipTree(it) }
     from(dependencies)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA") // avoid signatures from dependencies
+    exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA") // TODO avoid signatures from dependencies
 }
 
 dependencies {

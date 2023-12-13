@@ -13,6 +13,7 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.tinylog.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -54,6 +55,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
     public void didChange(DidChangeTextDocumentParams params) {
         // TODO implement document change handling
         doc = Document.loadFile(doc, params.getTextDocument());
+        DiagnosticHandler.clear(params.getTextDocument().getUri());
         DiagnosticHandler.refresh();
         // only update diagnostics on save
         Logger.info("changed");
@@ -69,7 +71,8 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
 
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
-        doc.ifPresent(d -> d.refresh());
+        doc.ifPresent(Document::refresh);
+        DiagnosticHandler.clear(params.getTextDocument().getUri());
         DiagnosticHandler.refresh();
         Logger.info("saved");
     }
@@ -105,14 +108,16 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         });
     }
 
+
+    // TODO fix that diagnostics are first refreshed on didChange:
     @Override
     public CompletableFuture<DocumentDiagnosticReport> diagnostic(DocumentDiagnosticParams params) {
         doc = Document.loadFile(doc, params.getTextDocument());
-        return doc
-                .flatMap(d -> Properties
-                        .getDiagnostics(d.rootNode)
-                        .map(DiagnosticHandler::report))
-                .orElseGet(DiagnosticHandler::emptyReport);
+        var v = doc.flatMap(d -> Properties.getDiagnostics(d.rootNode)).orElse(new ArrayList<>());
+        if (!Document.parseErrors.isEmpty()) {
+            v.addAll(Document.parseErrors);
+        }
+        return DiagnosticHandler.report(v);
     }
 
     private boolean inRange(Range outer, Range inner) {

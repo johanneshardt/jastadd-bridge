@@ -1,5 +1,4 @@
-.vscode/**
-**.idea/
+# client
 **/*.ts
 **/*.map
 .gitignore
@@ -14,13 +13,16 @@ client/node_modules/**
 !client/node_modules/vscode-languageserver-types/**
 !client/node_modules/{minimatch,brace-expansion,concat-map,balanced-match}/**
 !client/node_modules/{semver,lru-cache,yallist}/**
+client/out/
+!client/out/extension.js
 
 # server
-**.gradle
-server/gradle
-server/build/**
-**/*gradle*
-# distribute the server.jar file
 server/
 !server/server.jar
 
+# other
+.vscode/**
+**.idea/
+examples/
+scripts/
+node_modules/

@@ -14,6 +14,7 @@ Before publishing, we should test whether the `vscode:prepublish` script works!
 ## Logging
 
 Introduce setting that controls level of logging and send info to server. - DONE
+Unmatched cancel notification?
 
 ## Settings
 
@@ -23,7 +24,6 @@ Introduce setting that controls level of logging and send info to server. - DONE
 
 ## Caching
 
-- Diagnostics are not cleared correctly in some cases
 - Can't rename jastadd files, they seem to be locked by the extension
 
 ## Restarts

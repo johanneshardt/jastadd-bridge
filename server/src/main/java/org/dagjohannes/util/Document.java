@@ -6,9 +6,8 @@ import codeprober.metaprogramming.AstNodeApiStyle;
 import codeprober.metaprogramming.TypeIdentificationStyle;
 import codeprober.protocol.PositionRecoveryStrategy;
 import codeprober.util.ASTProvider;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.TextDocumentItem;
-import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import codeprober.util.MagicStdoutMessageParser;
+import org.eclipse.lsp4j.*;
 import org.tinylog.Logger;
 
 import java.net.URI;
@@ -27,6 +26,7 @@ public class Document {
     public Path documentPath;
     public AstNode rootNode;
     public AstInfo info;
+    public static List<Diagnostic> parseErrors = new ArrayList<>();
 
     private Document(VersionedTextDocumentIdentifier ident, Path documentPath, AstNode rootNode, AstInfo info) {
         this.ident = ident;
@@ -92,28 +92,57 @@ public class Document {
 
 
     private static Optional<Document> parse(String uri) {
+        Document.parseErrors = new ArrayList<>(); // Clear parsing errors each time
+        if (config.purgeCache()) ASTProvider.purgeCache();
+        var documentPath = resolve(uri);
+
+        var arguments = new ArrayList<>(List.of(documentPath.toFile().getAbsolutePath()));
+        arguments.addAll(config.compilerArgs()); // User arguments are passed after the file path
+        var ast = ASTProvider.parseAst(config.compilerPath(), arguments.toArray(String[]::new));
         try {
-            if (config.purgeCache()) ASTProvider.purgeCache();
-
-            var documentPath = resolve(uri);
-            var arguments = new ArrayList<>(List.of(documentPath.toFile().getAbsolutePath()));
-            arguments.addAll(config.compilerArgs()); // User arguments are passed after the file path
-
-            var rootNode = new AstNode(
-                    ASTProvider.parseAst(config.compilerPath(),
-                            arguments.toArray(String[]::new)).rootNode
-            );
-
+            var rootNode = new AstNode(ast.rootNode);
             var info = new AstInfo(
                     rootNode,
                     PositionRecoveryStrategy.ALTERNATE_PARENT_CHILD,
                     AstNodeApiStyle.BEAVER_PACKED_BITS,
                     TypeIdentificationStyle.REFLECTION
             );
-
             // Is version == 0 valid? TODO
             return Optional.of(new Document(new VersionedTextDocumentIdentifier(uri, 0), documentPath, rootNode, info));
         } catch (NullPointerException e) {
+            // Parsing failed, check if we can calculate a diagnostic
+            // See codeprober.requesthandler.listnodeshandler
+            for (var line : ast.captures) {
+                switch (line.type) {
+                    case stdout: {
+                        final var diagnostic = MagicStdoutMessageParser.parse(line.asStdout());
+                        if (diagnostic != null) {
+                            var d = new org.eclipse.lsp4j.Diagnostic(
+                                    bitsToRange(diagnostic.start, diagnostic.end),
+                                    diagnostic.msg
+                            );
+                            Logger.error("Parsing error: {}", d);
+                            parseErrors.add(d);
+                        }
+                        break;
+                    }
+
+                    case stderr:
+                        final var diagnostic = MagicStdoutMessageParser.parse(line.asStderr());
+                        if (diagnostic != null) {
+                            var d = new org.eclipse.lsp4j.Diagnostic(
+                                    bitsToRange(diagnostic.start, diagnostic.end),
+                                    diagnostic.msg
+                            );
+                            Logger.error("Parsing error: {}", d);
+                            parseErrors.add(d);
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+            }
             Logger.error(e, "Couldn't load document at '{}'", uri);
             return Optional.empty();
         }
@@ -126,5 +155,19 @@ public class Document {
         } catch (URISyntaxException e) {
             throw new RuntimeException("Couldn't resolve path with URI: " + documentURI); // TODO better error handling?
         }
+    }
+
+    /**
+     * Converts the code prober packed bits representation to a LSP4J range
+     *
+     * @param start - packed representation of startLine, startCol
+     * @param end   - packed representation of endLine, endCol
+     */
+    private static Range bitsToRange(int start, int end) {
+        var startCol = start & ((1 << 12) - 1);
+        var startLine = start >> 12;
+        var endCol = end & ((1 << 12) - 1);
+        var endLine = end >> 12;
+        return new Range(new Position(startLine - 1, startCol - 1), new Position(endLine - 1, endCol));
     }
 }
