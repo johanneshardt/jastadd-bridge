@@ -106,7 +106,7 @@ This repository is covered by the license BSD 2-clause, see the `LICENCE` file.
 
 ## Acknowledgements
 
-- [CodeProber](https://github.com/lu-cs-sde/codeprober/)
+- [CodeProber](https://github.com/lu-cs-sde/codeprober/) used both as library, and modified in [NodesAtPosition.java](server/src/main/java/org/dagjohannes/util/NodesAtPosition.java)
 - [JastAdd](https://jastadd.cs.lth.se/web/)
 - [LSP4J](https://github.com/eclipse-lsp4j/lsp4j)
 - [vscode-languageclient](https://www.npmjs.com/package/vscode-languageclient)
