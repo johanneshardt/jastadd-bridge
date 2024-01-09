@@ -1,29 +1,13 @@
 plugins {
-    id("application")
+    `java-conventions`
 }
 
 group = "org.dagjohannes"
 version = "1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
-tasks {
-    compileJava {
-        options.encoding = "UTF-8"
-    }
-
-    compileTestJava {
-        options.encoding = "UTF-8"
-    }
-}
+//application {
+//    mainClass = "org.dagjohannes.Main"
+//}
 
 // Package into fat jar
 tasks.jar {

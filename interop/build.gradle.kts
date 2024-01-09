@@ -1,28 +1,8 @@
 plugins {
-    id("java")
+    `java-conventions`
 }
 
 version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
-}
-
-tasks {
-    compileJava {
-        options.encoding = "UTF-8"
-    }
-
-    compileTestJava {
-        options.encoding = "UTF-8"
-    }
-}
 
 // Package into fat jar
 tasks.jar {
