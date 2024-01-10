@@ -1,0 +1,1 @@
+let area = 2.0 * 3.0 in 4.0 * area end

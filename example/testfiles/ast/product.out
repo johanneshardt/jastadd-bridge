@@ -1,0 +1,4 @@
+Program
+  Mul
+    Numeral NUMERAL="2.0"
+    IdUse ID="PI"

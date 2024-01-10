@@ -1,0 +1,120 @@
+plugins {
+  id 'java'
+  id 'idea'
+  id 'org.jastadd' version '1.14.1'
+}
+
+defaultTasks 'test'
+
+// Specify where to look for dependencies like Beaver, JFlex:
+repositories.mavenCentral()
+
+// Dependency configurations (https://docs.gradle.org/current/userguide/dependency_management.html#sub:configurations):
+configurations {
+  jflex
+  beaver
+}
+
+// Dependencies are Jar files needed to compile and generate the compiler.
+dependencies {
+  implementation 'net.sf.beaver:beaver-rt:0.9.11'
+  implementation(files("jastaddbridge-interop.jar"))
+
+  testImplementation 'junit:junit:4.13.2'
+
+  jflex 'de.jflex:jflex:1.8.2'
+  beaver 'org.extendj:nbfront:0.1.6'
+  jastadd2 "org.jastadd:jastadd:2.3.6" // Selects which JastAdd version to use (optional).
+}
+
+// Needed to work with old DrAST versions.
+compileJava.sourceCompatibility = compileJava.targetCompatibility = "1.8"
+compileJava.options.encoding = compileTestJava.options.encoding = 'UTF-8'
+
+// This specifies where the source code is located:
+sourceSets {
+  main.java.srcDirs = [ 'src/java', 'src/gen' ]
+  test.java.srcDirs = [ 'src/test' ]
+}
+
+// Configuration for the test running.
+test {
+  // Log passed/failed tests in the console (see also build/reports/tests):
+  testLogging.events 'passed', 'failed'
+
+  testLogging.exceptionFormat = 'full' // Full error output for test failures.
+
+  dependsOn 'cleanTest'  // This causes tests to always be re-run.
+}
+
+// Configuration for the generated Jar file.
+jar {
+  // The Main-Class attribute specifies which class should be run when by java -jar compiler.jar.
+  manifest.attributes 'Main-Class': 'lang.Compiler'
+  destinationDirectory = projectDir  // Gradle by default puts the Jar in build/libs/.
+  archiveFileName = 'compiler.jar'
+
+  // The following from-specification includes all dependencies in compiler.jar
+  // so that it can be run as a separate program easily.
+  // This is needed because the Beaver runtime classes are otherwise not included.
+  // Source: https://www.mkyong.com/gradle/gradle-create-a-jar-file-with-dependencies/
+  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+  into('src/jastadd') { from('src/jastadd') }
+  into('src/parser') { from('src/parser') }
+}
+
+// Before compiling, we should generate some Java code:
+compileJava.dependsOn 'generateJava', 'generateScanner', 'generateParser'
+
+task generateJava(type: org.jastadd.JastAddTask) {
+  description 'Generates the compiler AST classes from JastAdd specifications.'
+  outputDir = file('src/gen')
+  sources = fileTree(dir: 'src/jastadd', includes: [ '**/*.jrag', '**/*.jadd', '**/*.ast' ])
+  options = [ '--package=lang.ast', '--beaver', '--cache=all', '--tracing=compute' ]
+}
+
+task generateScanner(type: JavaExec) {
+  description 'Generates the scanner with JFlex.'
+  classpath = configurations.jflex
+  mainClass = 'jflex.Main'
+
+  // Options to JFlex (http://jflex.de/manual.html#running-jflex):
+  args '-d', file('src/gen/lang/ast').path, file('src/scanner/scanner.flex').path
+
+  doFirst {
+    // Ensure src/gen exists before running JFlex:
+    file('src/gen').mkdirs()
+  }
+}
+
+task generateParser(type: JavaExec) {
+  description 'Generates the parser with Beaver.'
+  classpath = configurations.beaver
+  mainClass = 'beaver.comp.run.Make'
+
+  // Options to Beaver (http://beaver.sourceforge.net/):
+  args '-d', file('src/gen').path,
+      '-t', '-c', '-w',
+      file('src/parser/parser.beaver').path
+
+  doFirst {
+    // Ensure src/gen exists before running Beaver:
+    file('src/gen').mkdirs()
+  }
+}
+
+// The following makes the clean task also remove generated code:
+clean.dependsOn 'cleanGeneratedJava'
+
+task cleanGeneratedJava(type: Delete) {
+  description 'Remove generated Java code.'
+  delete file('src/gen')
+}
+
+// Makes the clean task remove the generated compiler.jar file:
+clean.dependsOn 'cleanJarfile'
+
+task cleanJarfile(type: Delete) {
+  description 'Remove generated jar file'
+  delete file('compiler.jar')
+}

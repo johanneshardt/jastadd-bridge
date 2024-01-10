@@ -1,0 +1,75 @@
+%class "LangParser";
+%package "lang.ast";
+
+%embed {:
+	static public class SyntaxError extends RuntimeException { 
+		public int start;
+		public int end;
+		
+		public SyntaxError(String msg) {
+			super(msg);
+		}
+
+		public SyntaxError(String msg, int start, int end) {
+			super(msg);
+			this.start = start;
+			this.end = end;
+		}
+	}
+	// Disable syntax error recovery
+	protected void recoverFromError(Symbol token, TokenStream in) {
+		throw new SyntaxError("Syntax error at: " + token.value, token.getStart(), token.getEnd());
+	}
+:};
+
+%terminals LET, IN, END, ASSIGN, MUL, DIV, ID, NUMERAL;
+
+// new terminals for Calc 2.0
+%terminals ASK, USER, LBRACKET, RBRACKET;
+
+%typeof program = "Program";
+%typeof exp = "Expr";
+%typeof factor = "Expr";
+%typeof let = "Let";
+%typeof ask = "Ask";
+%typeof numeral = "Numeral";
+%typeof id_decl = "IdDecl";
+%typeof id_use = "IdUse";
+%typeof binding = "Binding";
+%typeof binding_list = "List";
+
+%goal program;
+
+program = exp.a {: return new Program(a); :} ;
+
+exp =
+	factor
+	| exp.a MUL factor.b {: return new Mul(a, b); :}
+	| exp.a DIV factor.b {: return new Div(a, b); :}
+	;
+
+factor =
+	let
+	| ask
+	| numeral
+	| id_use
+	;
+
+let = LET binding_list.a IN exp.b END {: return new Let(a, b); :} ;
+
+ask =
+	ASK USER {: return new Ask(new Opt()); :}
+	| ASK USER LBRACKET exp.a RBRACKET {: return new Ask(new Opt(a)); :}
+	;
+
+binding_list =
+	binding.a {: return new List().add(a); :}
+	| binding_list.a binding.b {: return a.add(b); :}
+	;
+
+binding = id_decl.a ASSIGN exp.b {: return new Binding(a, b); :} ;
+
+numeral = NUMERAL.num {: return new Numeral(num); :} ;
+
+id_decl = ID.id {: return new IdDecl(id); :} ;
+id_use = ID.id {: return new IdUse(id); :} ;

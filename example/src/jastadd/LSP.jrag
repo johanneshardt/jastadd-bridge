@@ -1,0 +1,35 @@
+import jastaddBridge.interop.*;
+import java.util.HashSet;
+
+aspect LSP {
+  syn String ASTNode.lsp_hover() = this.getClass().getSimpleName();
+  
+  syn IdDecl IdUse.lsp_definition() = decl();
+  
+  syn ASTNode Program.lsp_main() = getChild(0);
+  public void Program.lsp_run() {
+    System.out.println("Hello, world!");
+  }
+}
+
+aspect LSPDiagnostics {
+  coll Set<Diagnostic> Program.lsp_diagnostics() [new HashSet()] with add root Program;
+  
+  syn Range ASTNode.range() = Range.of(getStart(), getEnd());
+  
+  Diagnostic ASTNode.diagnostic(String message, Severity s) {
+    return Diagnostic.of(message, s, range());
+  }
+
+  IdUse contributes diagnostic("symbol '" + getID() + "' is not declared", Severity.Error)
+    when decl().isUnknown()
+    to Program.lsp_diagnostics() for program();
+
+  IdDecl contributes diagnostic("symbol '" + getID() + "' is already declared!", Severity.Error)
+    when isMultiDeclared()
+    to Program.lsp_diagnostics() for program();
+
+  IdUse contributes diagnostic("the definition of symbol '" + getID() + "' is circular", Severity.Warning)
+    when isCircular()
+    to Program.lsp_diagnostics() for program();
+}

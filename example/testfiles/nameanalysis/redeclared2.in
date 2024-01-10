@@ -1,0 +1,10 @@
+let
+	pi = 3.14
+	tau = let
+			pi = 3.14
+		in
+			pi*2.0
+		end
+in
+	tau
+end

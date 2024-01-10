@@ -1,0 +1,10 @@
+let
+  r = 3.23
+  p = 100.0
+in
+  let
+    a = r / p
+  in
+    a
+  end
+end

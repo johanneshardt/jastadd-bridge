@@ -1,0 +1,38 @@
+aspect NameAnalysis {
+	syn IdDecl IdUse.decl() = lookup(getID());
+	inh IdDecl IdUse.lookup(String name);
+
+	eq Let.getExpr().lookup(String name) {
+		IdDecl decl = localLookup(name, getNumBinding()-1);
+		return !decl.isUnknown() ? decl : lookup(name);
+	}
+	eq Program.getChild().lookup(String name) = unknownDecl();
+	inh IdDecl Let.lookup(String name);
+
+	syn IdDecl Let.localLookup(String name, int until) {
+		for (int i = 0; i <= until; i++) {
+			if (getBinding(i).getIdDecl().getID().equals(name)) {
+				return getBinding(i).getIdDecl();
+			}
+		}
+		return unknownDecl();
+	}
+
+	eq Let.getBinding(int index).lookup(String name) {
+		IdDecl decl = localLookup(name, index);
+		return !decl.isUnknown() ? decl : lookup(name);
+	}
+
+	inh IdDecl IdDecl.lookup(String name);
+	syn boolean IdDecl.isMultiDeclared() = lookup(getID()) != this;
+}
+
+aspect CircularDefinitions {
+	/* Identify circular definitions in let expressions */
+	syn boolean IdUse.isCircular() = inExprOf(decl());
+	inh boolean IdUse.inExprOf(IdDecl decl);
+	inh boolean Binding.inExprOf(IdDecl decl);
+	eq Binding.getExpr().inExprOf(IdDecl decl)
+		= getIdDecl() == decl || inExprOf(decl);
+	eq Program.getChild().inExprOf(IdDecl decl) = false;
+}

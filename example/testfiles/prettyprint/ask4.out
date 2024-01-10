@@ -1,0 +1,5 @@
+ask user [ask user [let
+          r = 3.14
+        in
+          r
+        end]]
