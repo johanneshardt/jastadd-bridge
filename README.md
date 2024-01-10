@@ -61,18 +61,6 @@ An `Edit` is applied to the document by replacing all text between start-end wit
 
 - Not implemented yet
 
-### Syntax highlighting
-
-- Not implemented yet
-
-### Inlay hints
-
-- Not implemented yet
-
-### Code completion
-
-- Not implemented yet
-
 ## Building
 
 ### Prerequisites
