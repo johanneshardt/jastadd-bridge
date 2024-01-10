@@ -8,21 +8,21 @@ import * as assert from "assert";
 import { getDocUri, activate, EXTENSION_NAME } from "./helper";
 
 suite("Should get diagnostics", () => {
-  test("Functions should be lower cased", async () => {
-    await testDiagnostics(getDocUri("diagnostic_formatting.jastadd"), [
+  test("Variables should be declared before use", async () => {
+    await testDiagnostics(getDocUri("not_declared.jastadd"), [
       {
-        message: "names should be lower cased!",
-        range: toRange(0, 4, 0, 8),
-        severity: vscode.DiagnosticSeverity.Information,
+        message: "symbol 'me' is not declared",
+        range: toRange(1, 7, 1, 9),
+        severity: vscode.DiagnosticSeverity.Error,
         source: EXTENSION_NAME,
       },
     ]);
   });
-  test("Number of arguments should match function definition", async () => {
-    await testDiagnostics(getDocUri("diagnostic_args_no.jastadd"), [
+  test("Variables cannot be redeclared", async () => {
+    await testDiagnostics(getDocUri("redeclared.jastadd"), [
       {
-        message: "the number of arguments passed to 'oneArg' is 0, should be 1",
-        range: toRange(2, 4, 2, 12),
+        message: "symbol 'pi' is already declared!",
+        range: toRange(2, 1, 2, 3),
         severity: vscode.DiagnosticSeverity.Error,
         source: EXTENSION_NAME,
       },
@@ -41,7 +41,6 @@ async function testDiagnostics(
   expectedDiagnostics: vscode.Diagnostic[]
 ) {
   await activate(docUri);
-
   const actualDiagnostics = vscode.languages.getDiagnostics(docUri);
 
   assert.equal(actualDiagnostics.length, expectedDiagnostics.length);

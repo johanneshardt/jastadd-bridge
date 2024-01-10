@@ -1,4 +1,4 @@
-# JastAdd Bridge
+# jastadd-bridge
 
 A reusable VSCode extention built on the language server protocol, allowing JastAdd tools to interface with LSP interactions.
 
@@ -55,11 +55,14 @@ An `Edit` is applied to the document by replacing all text between start-end wit
 
 ### Go to definition
 
-- Not implemented yet
+Implementing the attribute `ASTNode ASTNode.lsp_definition()` can be useful for a language with variable declarations and uses. An implementation of `lsp_definition()` on some variable should return the AST node that declared it. This allows you to `ctrl+click` on a variable use, which links you to where it was declared.
 
 ### "Run" button
 
-- Not implemented yet
+A run lens/button allows you to execute code directly in the editor, by clicking a button that appears over a "main" function. Two attributes are needed here:
+
+- `ASTNode Program.lsp_main()`: should return the ASTNode of your main function. `Program` should be replaced by the type of your root AST node.
+- `public void Program.lsp_run()`: Should evaluate the main function. This means that your compiler must have support for interpreting code. If you have some function `eval()`, that would be called here.
 
 ## Building
 
@@ -83,10 +86,23 @@ It is helpful to install the extension, since you can then change its settings i
 
 **Steps to install:**
 
-1. `vsce package` (generates a .vsix file)
+1. `npx vsce package` (generates a .vsix file)
 2. Install the generated .vsix file by going to the "extensions" tab, opening the kebab menu in the top right, and selecting "install from VSIX". ![Alt text](docs/extension_install.png)
 
 While debugging the extension, it may help to enable "verbose" logging in the extension settings. This shows both the LSP payloads sent between client and server, as well as all traces printed by the server, along with stacktraces if an exception occurs.
+
+## Repository structure
+
+- client: The VSCode extension code, along with the integration tests.
+- interop: A small library that can be imported to simplify implementing the attributes needed for JastAdd bridge to work. A fat jar can be created by running `./gradlew interop:jar`.
+- server: The language server code
+- examples/CalcRAG: Small compiler which we've extended with support for JastAdd bridge
+
+All Java sources are managed with the `Gradle` build tool, where `server`, `interop` and `examples/CalcRAG` are included as [submodules](https://docs.gradle.org/current/userguide/intro_multi_project_builds.html)in the outer `Gradle` build. Running tasks for a specific submodule can be done with `./gradlew <submodule>:<taskname>`
+
+## Examples
+
+Listed under [examples/CalcRAG](examples/CalcRAG) is a working demonstration of implementing support for jastadd-bridge for your compiler. CalcRAG is a minimal language that supports arithmetic and name bindings, it is part of the [Compilers course](https://kurser.lth.se/kursplaner/23_24%20eng/EDAN65.html) at Lund University. All added attributes are located in the `LSP.jrag` aspect. The example can be compiled by running `./gradlew CalcRAG:jar` in the root directory of this repository. There are some simple integration tests for this compiler, see the `client/src/test` directory. The test suite can be ran through the run configuration "Language Server E2E Test" in the "run and debug"-dropdown. This can take some time, but eventually, a new VSCode instance should appear. When it closes, test output can be viewed in the "debug console" tab.
 
 ## License
 

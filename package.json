@@ -99,8 +99,8 @@
     "compile": "tsc -b",
     "watch": "tsc -b -w",
     "jar": "run-script-os",
-    "jar:win32": "gradlew server:jar",
-    "jar:default": "./gradlew server:jar",
+    "jar:win32": "gradlew server:jar interop:jar",
+    "jar:default": "./gradlew server:jar interop:jar",
     "lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
     "postinstall": "cd client && npm install && cd ..",
     "test": "sh ./scripts/e2e.sh"
