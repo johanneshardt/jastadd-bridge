@@ -1,0 +1,10 @@
+aspect Tracing {
+  public void ASTNode.cpr_setTraceReceiver(final java.util.function.Consumer<Object[]> recv) {
+    trace().setReceiver(new ASTState.Trace.Receiver() {
+      @Override
+      public void accept(ASTState.Trace.Event event, ASTNode node, String attribute, Object params, Object value) {
+        recv.accept(new Object[] { event, node, attribute, params, value });
+      }
+    });
+  }
+}

@@ -19,6 +19,17 @@ export async function activate(docUri: vscode.Uri) {
   const ext = vscode.extensions.getExtension(
     "temp-publisher-change-this.jastadd-bridge"
   )!;
+  const config = vscode.workspace.getConfiguration("jastaddBridge");
+  const calcRAGCompiler = path.resolve(
+    __dirname,
+    "../../../examples/CalcRAG/compiler.jar"
+  );
+  config.update(
+    "compiler.path",
+    calcRAGCompiler,
+    vscode.ConfigurationTarget.Workspace
+  );
+
   await ext.activate();
   try {
     doc = await vscode.workspace.openTextDocument(docUri);

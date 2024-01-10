@@ -1,0 +1,11 @@
+Program
+  Let
+    List
+      Binding
+        IdDecl ID="area"
+        Mul
+          Numeral NUMERAL="2.0"
+          Numeral NUMERAL="3.0"
+    Mul
+      Numeral NUMERAL="4.0"
+      IdUse ID="area"

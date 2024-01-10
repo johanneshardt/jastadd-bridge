@@ -1,0 +1,13 @@
+let
+	you = let
+		me = 0.0
+	in
+		1.0
+	end
+in
+	let
+		us = me * you
+	in
+		us
+	end
+end

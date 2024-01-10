@@ -1,0 +1,5 @@
+let radius = 5.0 in
+  let PI = 3.14 in 
+    2.0 * PI * radius 
+  end 
+end

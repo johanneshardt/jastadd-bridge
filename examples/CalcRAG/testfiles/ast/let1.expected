@@ -1,0 +1,7 @@
+Program
+  Let
+    List
+      Binding
+        IdDecl ID="r"
+        Numeral NUMERAL="3.14"
+    IdUse ID="r"

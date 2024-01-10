@@ -1,0 +1,67 @@
+import java.io.PrintStream;
+
+aspect PrettyPrint {
+	public void ASTNode.prettyPrint(PrintStream out) {
+		prettyPrint(out, "");
+		out.println();
+	}
+
+	public void ASTNode.prettyPrint(PrintStream out, String ind) {
+	  for (ASTNode child : astChildren()){
+		  child.prettyPrint(out, ind);
+		}
+	}
+
+	public void Mul.prettyPrint(PrintStream out, String ind) {
+		getLeft().prettyPrint(out, ind);
+		out.print(" * ");
+		getRight().prettyPrint(out, ind);
+	}
+
+	public void Div.prettyPrint(PrintStream out, String ind) {
+		getLeft().prettyPrint(out, ind);
+		out.print(" / ");
+		getRight().prettyPrint(out, ind);
+	}
+
+	public void Numeral.prettyPrint(PrintStream out, String ind) {
+		out.print(getNUMERAL());
+	}
+
+	public void IdUse.prettyPrint(PrintStream out, String ind) {
+		out.print(getID());
+	}
+
+	public void IdDecl.prettyPrint(PrintStream out, String ind) {
+		out.print(getID());
+	}
+
+	public void Let.prettyPrint(PrintStream out, String ind) {
+		out.println("let");
+		for (Binding b : getBindings()){
+		  out.print(ind+"  ");
+			b.prettyPrint(out, ind+"  ");
+			out.println();
+		}
+		out.println(ind + "in");
+		out.print(ind+"  ");
+		getExpr().prettyPrint(out, ind+"  ");
+		out.println();
+		out.print(ind + "end");
+	}
+
+	public void Binding.prettyPrint(PrintStream out, String ind) {
+		getIdDecl().prettyPrint(out, ind);
+		out.append(" = ");
+		getExpr().prettyPrint(out, ind+"    ");
+	}
+
+	public void Ask.prettyPrint(PrintStream out, String ind) {
+		out.print("ask user");
+		if (hasDefault()) {
+			out.print(" [");
+			getDefault().prettyPrint(out, ind+"    ");
+			out.print("]");
+		}
+	}
+}

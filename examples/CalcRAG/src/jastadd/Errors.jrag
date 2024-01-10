@@ -1,0 +1,45 @@
+import java.util.Set;
+import java.util.TreeSet;
+
+aspect Errors {
+	public class ErrorMessage implements Comparable<ErrorMessage> {
+		protected final String message;
+		protected final int lineNumber;
+		public ErrorMessage(String message, int lineNumber) {
+			this.message = message;
+			this.lineNumber = lineNumber;
+		}
+		public int compareTo(ErrorMessage other) {
+			if (lineNumber == other.lineNumber) {
+				return message.compareTo(other.message);
+			}
+			return Integer.compare(lineNumber, other.lineNumber); 
+		}
+		public String toString() {
+			return "Error at line " + lineNumber + ": " + message;
+		}
+	} 
+	protected ErrorMessage ASTNode.error(String message) {
+		return new ErrorMessage(message, getLine(getStart()));
+	}
+
+	coll Set<ErrorMessage> Program.errors() [new TreeSet<ErrorMessage>()] with add root Program;
+
+	inh Program ASTNode.program();
+	eq Program.getChild().program() = this;
+}
+
+
+aspect ErrorContributions {
+	IdUse contributes error("symbol '" + getID() + "' is not declared")
+		when decl().isUnknown()
+		to Program.errors() for program();
+
+	IdDecl contributes error("symbol '" + getID() + "' is already declared!")
+		when isMultiDeclared()
+		to Program.errors() for program();
+
+	IdUse contributes error("the definition of symbol '" + getID() + "' is circular")
+		when isCircular()
+		to Program.errors() for program();
+}

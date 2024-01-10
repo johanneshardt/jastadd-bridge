@@ -1,0 +1,15 @@
+Program ::= Expr;
+
+abstract Expr;
+Mul : Expr ::= Left:Expr Right:Expr;
+Div : Expr ::= Left:Expr Right:Expr;
+Numeral : Expr ::= <NUMERAL>;
+IdDecl : Expr ::= <ID>;
+UnknownDecl : IdDecl;
+IdUse : Expr ::= <ID>;
+
+Let : Expr ::= Binding* Expr;
+Binding ::= IdDecl Expr;
+
+Ask : Expr ::= [Default:Expr];
+

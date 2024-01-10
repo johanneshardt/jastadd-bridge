@@ -1,6 +1,0 @@
-int main() {
-    int v = 3;
-    oneArg(); 
-}
-
-int oneArg(int n) {}

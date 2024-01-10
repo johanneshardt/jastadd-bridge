@@ -1,0 +1,9 @@
+let
+	pi = let
+			pi = 3.14
+		in
+			pi
+		end
+in
+	pi
+end

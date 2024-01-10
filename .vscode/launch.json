@@ -30,7 +30,7 @@
 			"outFiles": [
 				"${workspaceRoot}/client/out/test/**/*.js"
 			],
-			"preLaunchTask": "build server & client"
+			"preLaunchTask": "build example"
 		}
 	]
 }

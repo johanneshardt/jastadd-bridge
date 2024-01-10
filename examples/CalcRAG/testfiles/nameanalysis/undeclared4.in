@@ -1,0 +1,9 @@
+let you = let
+		me = 0.0
+	in
+		1.0
+	end
+	us = me / you
+in
+	us
+end

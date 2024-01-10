@@ -1,0 +1,5 @@
+let
+	me = 3.0
+in
+	me
+end
