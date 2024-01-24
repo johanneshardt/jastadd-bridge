@@ -332,3 +332,6 @@ gradle-app.setting
 
 # allow interop jar for example
 !examples/CalcRAG/jastaddbridge-interop.jar
+
+# don't commit .vscode dir created by integration tests
+client/src/testFiles/.vscode/
