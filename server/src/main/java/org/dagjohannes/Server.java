@@ -63,7 +63,7 @@ public class Server implements LanguageServer, LanguageClientAware {
         serverCapabilities.setDefinitionProvider(true);
         serverCapabilities.setCodeLensProvider(new CodeLensOptions(true));
 
-        client.showMessage(new MessageParams(MessageType.Warning, "HELLO HI HELLO WOW"));
+        client.showMessage(new MessageParams(MessageType.Info, "JastaddBridge initialized"));
         this.initialized = true;
         return CompletableFuture.supplyAsync(() -> res);
     }

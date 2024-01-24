@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class TextDocumentAndWorkspaceImpl implements TextDocumentService, WorkspaceService {
     public static Configuration config;
@@ -84,16 +85,20 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
         var compilerPath = compiler.get("path").getAsString();
         var compilerArgs = compiler.getAsJsonArray("arguments");
         var cacheStrategy = settings.get("cacheStrategy").getAsString();
-        boolean purgeCache = switch (cacheStrategy) {
-            case "partial" -> false;
-            case "purge" -> true;
-            default -> {
+        boolean purgeCache;
+        switch (cacheStrategy) {
+            case "partial": purgeCache = false; break;
+            case "purge": purgeCache = true; break;
+            default: {
                 Logger.error("Invalid configuration option '{}' for setting 'Cache Strategy'", cacheStrategy);
-                yield false;
+                purgeCache = false;
             }
-        };
+
+        }
+
         Logger.info("Received configuration: compiler path={}, compiler args={}. cache strategy={}", compilerPath, compilerArgs, cacheStrategy);
-        TextDocumentAndWorkspaceImpl.config = new Configuration(compilerPath, compilerArgs.asList().stream().map(JsonElement::getAsString).toList(), purgeCache);
+        TextDocumentAndWorkspaceImpl.config = new Configuration(compilerPath,
+                compilerArgs.asList().stream().map(JsonElement::getAsString).collect(Collectors.toList()), purgeCache);
     }
 
     @Override
@@ -103,7 +108,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
                     .getChanges()
                     .stream()
                     .map(FileEvent::getUri)
-                    .toList();
+                    .collect(Collectors.toList());
             if (uris.contains(d.ident.getUri())) d.refresh();
         });
     }
@@ -139,7 +144,7 @@ public class TextDocumentAndWorkspaceImpl implements TextDocumentService, Worksp
                             .stream()
                             .filter(a -> inRange(a.getDiagnostics().get(0).getRange(), params.getRange()))
                             .map(Either::<Command, CodeAction>forRight)
-                            .toList();
+                            .collect(Collectors.toList());
                 })
         ).orElse(List.of());
         return CompletableFuture.completedFuture(actions);

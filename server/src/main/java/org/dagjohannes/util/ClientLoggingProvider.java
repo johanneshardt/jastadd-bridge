@@ -23,12 +23,14 @@ public class ClientLoggingProvider extends TinylogLoggingProvider {
     }
 
     public void setLogLevel(String logLevel) {
-        this.l = switch (logLevel) {
-            case "off" -> LogLevel.OFF;
-            case "messages" -> LogLevel.MESSAGES;
-            case "verbose" -> LogLevel.VERBOSE;
-            default -> throw new IllegalStateException("Unexpected value: " + logLevel);
+        LogLevel l;
+        switch (logLevel) {
+            case "off": l = LogLevel.OFF; break;
+            case "messages": l = LogLevel.MESSAGES; break;
+            case "verbose": l = LogLevel.VERBOSE; break;
+            default: throw new IllegalStateException("Unexpected value: " + logLevel);
         };
+        this.l = l;
     }
 
     @Override
@@ -49,11 +51,13 @@ public class ClientLoggingProvider extends TinylogLoggingProvider {
     @Override
     public boolean isEnabled(int depth, String tag, Level level) {
         // Level severity order: Trace -> Debug -> Info -> Warn -> Error
-        return switch (l) {
-            case OFF -> false;
-            case MESSAGES -> level.ordinal() >= Level.WARN.ordinal();
-            case VERBOSE -> true;
-        };
+        if (l.equals(LogLevel.OFF)) {
+            return false;
+        } else if (l.equals(LogLevel.MESSAGES)) {
+            return level.ordinal() >= Level.WARN.ordinal();
+        } else { // LogLevel must be verbose
+            return true;
+        }
     }
 
     @Override

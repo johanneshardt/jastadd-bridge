@@ -1,0 +1,2 @@
+# ignore generated ast files
+src/gen/**

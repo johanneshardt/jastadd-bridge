@@ -86,12 +86,14 @@ public class Properties {
         var start = new Position(startLine, startCol);
         var end = new Position(endLine, endCol);
         var range = new Range(start, end);
-        var severityEnum = switch (severity) {
-            case 1 -> DiagnosticSeverity.Error;
-            case 2 -> DiagnosticSeverity.Warning;
-            case 3 -> DiagnosticSeverity.Information;
-            case 4 -> DiagnosticSeverity.Hint;
-            default -> DiagnosticSeverity.Error;
+
+        DiagnosticSeverity severityEnum;
+        switch (severity) {
+            case 1: severityEnum = DiagnosticSeverity.Error; break;
+            case 2: severityEnum = DiagnosticSeverity.Warning; break;
+            case 3: severityEnum = DiagnosticSeverity.Information; break;
+            case 4: severityEnum = DiagnosticSeverity.Hint; break;
+            default: severityEnum = DiagnosticSeverity.Error; break;
         };
 
         return new Diagnostic(range, message, severityEnum, "jastadd-bridge");

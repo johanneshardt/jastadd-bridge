@@ -8,6 +8,9 @@
 # allow codeprober dependency
 !server/code-prober.jar
 
+# allow interop jar for example
+!examples/CalcRAG/jastaddbridge-interop.jar
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml

@@ -1,0 +1,1 @@
+This example language (and implementation) are taken from the [compilers course at LTH](https://fileadmin.cs.lth.se/cs/Education/EDAN65/2023/web/WeekByWeek.html) (EDAN65). We've added the aspect `LSP.jrag`, which adds integration with jastadd-bridge. See the 'examples' section in the project `README.md`.

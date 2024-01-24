@@ -70,7 +70,7 @@ A run lens/button allows you to execute code directly in the editor, by clicking
 
 - Node.js
 - VSCode version 1.75 or higher
-- JDK 17 (with $JAVA_HOME set)
+- JDK 11 (with $JAVA_HOME set)
 
 ### Setup
 
@@ -102,7 +102,7 @@ All Java sources are managed with the `Gradle` build tool, where `server`, `inte
 
 ## Examples
 
-Listed under [examples/CalcRAG](examples/CalcRAG) is a working demonstration of implementing support for jastadd-bridge for your compiler. CalcRAG is a minimal language that supports arithmetic and name bindings, it is part of the [Compilers course](https://kurser.lth.se/kursplaner/23_24%20eng/EDAN65.html) at Lund University. All added attributes are located in the `LSP.jrag` aspect. The example can be compiled by running `./gradlew CalcRAG:jar` in the root directory of this repository. There are some simple integration tests for this compiler, see the `client/src/test` directory. The test suite can be ran through the run configuration "Language Server E2E Test" in the "run and debug"-dropdown. This can take some time, but eventually, a new VSCode instance should appear. When it closes, test output can be viewed in the "debug console" tab.
+Listed under [examples/CalcRAG](examples/CalcRAG) is a working demonstration of implementing support for jastadd-bridge for your compiler. CalcRAG is a minimal language that supports arithmetic and name bindings, it is part of the [Compilers course](https://kurser.lth.se/kursplaner/23_24%20eng/EDAN65.html) at Lund University. All added attributes are located in the `LSP.jrag` aspect. See also `Compiler.java`, specifically how the `Codeprober_parse`-method prints line information for parsing errors. This is needed so that jastadd-bridge can detect parsing errors. The example can be compiled by running `./gradlew CalcRAG:jar` in the root directory of this repository. There are some simple integration tests for this compiler, see the `client/src/test` directory. The test suite can be ran through the run configuration "Language Server E2E Test" in the "run and debug"-dropdown. This can take some time, but eventually, a new VSCode instance should appear. When it closes, test output can be viewed in the "debug console" tab.
 
 ## License
 
@@ -117,3 +117,4 @@ This repository is covered by the license BSD 2-clause, see the `LICENCE` file.
 - [tinylog](https://tinylog.org/v2/)
 - [run-script-os](https://www.npmjs.com/package/run-script-os)
 - [locate-java-home](https://www.npmjs.com/package/locate-java-home)
+- The compilers course (EDAN65) at LTH, for the [CalcRAG language implementation](examples/CalcRAG/)
