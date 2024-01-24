@@ -24,7 +24,7 @@ export async function activate(docUri: vscode.Uri) {
     __dirname,
     "../../../examples/CalcRAG/compiler.jar"
   );
-  config.update(
+  await config.update(
     "compiler.path",
     calcRAGCompiler,
     vscode.ConfigurationTarget.Workspace
