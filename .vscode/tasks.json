@@ -30,7 +30,7 @@
 			]
 		},
 		{
-			"label": "generate jar",
+			"label": "interop & server jars",
 			"type": "shell",
 			"command": "./gradlew server:jar interop:jar",
 			"group": "build",
@@ -44,19 +44,9 @@
 			}
 		},
 		{
-			"label": "build server & client",
-			"dependsOn": [
-				{
-					"type": "npm",
-					"script": "watch"
-				},
-				"generate jar"
-			]
-		},
-		{
-			"label": "build example",
+			"label": "example jar",
 			"type": "shell",
-			"command": "./gradlew jar",
+			"command": "./gradlew CalcRAG:jar",
 			"group": "build",
 			"presentation": {
 				"echo": true,
@@ -67,5 +57,26 @@
 				"clear": false
 			}
 		},
+		{
+			"label": "build server & client",
+			"dependsOn": [
+				{
+					"type": "npm",
+					"script": "watch"
+				},
+				"interop & server jars"
+			]
+		},
+		{
+			"label": "build example",
+			"dependsOn": [
+				{
+					"type": "npm",
+					"script": "watch"
+				},
+				"interop & server jars",
+				"example jar"
+			]
+		}
 	]
 }
