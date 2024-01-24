@@ -73,7 +73,7 @@ export async function validateConfigAndLaunch(
     console.error(err);
     window
       .showErrorMessage(
-        `No Java installation found (JDK 17 or higher required).
+        `No Java installation found (JDK 11 or higher required).
       You might need to setup the $JAVA_HOME environment variable.
       Alternatively, specify a path in the extension settings.
       If you have already provided it, it may be incorrect.`,
@@ -100,7 +100,6 @@ function launchServer(
   const commonOptions: Executable = {
     command: javaPath,
     args: [
-      "-Djava.security.manager=allow", // TODO remove this
       "-jar",
       server,
       settings.get("compiler.path"),
@@ -167,7 +166,7 @@ function fetchJavaInstallations(
     return new Promise((resolve, reject) => {
       LocateJavaHome(
         {
-          version: ">= 17.0",
+          version: ">= 11.0",
           mustBeJDK: true,
         },
         function (error, installations) {
