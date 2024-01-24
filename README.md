@@ -114,6 +114,7 @@ This repository is covered by the license BSD 2-clause, see the `LICENCE` file.
 - [JastAdd](https://jastadd.cs.lth.se/web/)
 - [LSP4J](https://github.com/eclipse-lsp4j/lsp4j)
 - [vscode-languageclient](https://www.npmjs.com/package/vscode-languageclient)
+- [lsp-sample](https://github.com/microsoft/vscode-extension-samples/tree/main/lsp-sample) 
 - [tinylog](https://tinylog.org/v2/)
 - [run-script-os](https://www.npmjs.com/package/run-script-os)
 - [locate-java-home](https://www.npmjs.com/package/locate-java-home)
